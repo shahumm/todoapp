@@ -1,37 +1,43 @@
 import 'package:flutter/material.dart';
-import 'package:isar/isar.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todoapp/home_page.dart';
-import 'package:todoapp/tasks.dart';
-import 'package:todoapp/user.dart';
+import 'package:todoapp/intro_screen.dart';
+
+bool nameAsked = true;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final dir = await getApplicationDocumentsDirectory();
-  final isar = await Isar.open(
-    [TasksSchema, UserSchema],
-    directory: dir.path,
-    inspector: true,
-  );
-  runApp(MyApp(isar: isar));
+  // Ask For Name Once
+  final preferences = await SharedPreferences.getInstance();
+  nameAsked = preferences.getBool('UserName') ?? true;
+
+  // Initializing Hive
+  await Hive.initFlutter();
+
+  // Open Box
+  var box = await Hive.openBox('dataBox');
+
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final Isar isar;
-
-  const MyApp({super.key, required this.isar});
+  const MyApp({super.key});
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorSchemeSeed: const Color(0xFFD5B858),
         useMaterial3: true,
+        brightness: Brightness.dark,
       ),
-      home: HomePage(isar: isar),
+      home: nameAsked
+          ? const UserName()
+          : HomePage(userName: UserName.getUserName()),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
