@@ -7,7 +7,6 @@ import 'package:todoapp/todo_tile.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.userName});
-
   final String userName;
 
   @override
@@ -15,9 +14,19 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  // Others
   final _newTask = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   bool isTextFieldFocused = false;
+
+  String celebrativeText = "New Task";
+
+  // Update celebrative text
+  void updateCelebrativeText(String text) {
+    setState(() {
+      celebrativeText = text;
+    });
+  }
 
   // Referencing the Database
   final _box = Hive.box('dataBox');
@@ -37,11 +46,8 @@ class _HomePageState extends State<HomePage> {
       db.readDatabase();
       db.updateName(widget.userName);
     }
-
     db.readName();
 
-    // print('Widget UserName: ${widget.userName}');
-    // print('Saved Name in Hive: ${_box.get("Name")}');
     super.initState();
 
     _focusNode.addListener(() {
@@ -52,12 +58,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   // Checkbox Tapped
-  void updateCheckbox(bool? value, int index) {
-    setState(() {
-      db.todoList[index][1] = !db.todoList[index][1];
-    });
-    db.updateDatabase();
-  }
+  // void updateCheckbox(bool? value, int index) {
+  //   setState(() {
+  //     db.todoList[index][1] = !db.todoList[index][1];
+  //   });
+  //   db.updateDatabase();
+  // }
 
   // Save Task
   void saveNewTask() {
@@ -68,38 +74,6 @@ class _HomePageState extends State<HomePage> {
     _newTask.clear();
     db.updateDatabase();
   }
-
-  // // Creating New Task
-  // void createNewTask() {
-  //   showDialog(
-  //     context: context,
-  //     builder: (context) {
-  //       return AlertDialog(
-  //         content: SizedBox(
-  //           height: 120,
-  //           child: Column(
-  //             children: [
-  //               TextField(
-  //                 controller: _newTask,
-  //               ),
-  //               Row(
-  //                 children: [
-  //                   // Save Task
-  //                   MaterialButton(
-  //                     onPressed: () {
-  //                       saveNewTask();
-  //                     },
-  //                     child: const Text("Create"),
-  //                   ),
-  //                 ],
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       );
-  //     },
-  //   );
-  // }
 
   // Removing Task
   void removeTask(int index) {
@@ -112,7 +86,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
-    // Clean up the FocusNode when it's no longer needed
     _focusNode.dispose();
     super.dispose();
   }
@@ -127,20 +100,13 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: const Color.fromARGB(255, 24, 24, 24),
         extendBodyBehindAppBar: true,
 
-        // Add New Task
-        // floatingActionButton: FloatingActionButton(
-        //   elevation: 0,
-        //   backgroundColor: const Color.fromARGB(255, 158, 158, 158),
-        //   onPressed: createNewTask,
-        // ),
-
         // Tasks Being Built
         body: SafeArea(
           top: false,
           child: Column(
             children: [
               Expanded(
-                flex: 1,
+                flex: 2,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(40),
                   child: const SizedBox(
@@ -153,7 +119,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               Expanded(
-                flex: 2,
+                flex: 3,
                 child: Padding(
                   padding: const EdgeInsets.all(0),
                   child: ListView.builder(
@@ -161,7 +127,7 @@ class _HomePageState extends State<HomePage> {
                     itemBuilder: (context, index) {
                       final reversedIndex = db.todoList.length - index - 1;
                       return Padding(
-                        padding: const EdgeInsets.only(bottom: 13.0),
+                        padding: const EdgeInsets.only(bottom: 15.0),
                         child: Dismissible(
                           key: UniqueKey(),
                           onDismissed: (direction) {
@@ -193,9 +159,14 @@ class _HomePageState extends State<HomePage> {
                           child: TodoTile(
                             taskName: db.todoList[reversedIndex][0],
                             taskCompleted: db.todoList[reversedIndex][1],
-                            onChanged: (value) {
-                              updateCheckbox(value, reversedIndex);
-                            },
+                            // onChanged: (value) {
+                            //   updateCheckbox(value, reversedIndex);
+                            // },
+                            deleteFunction: (p0) => removeTask,
+                            index: reversedIndex,
+                            database: db,
+
+                            updateCelebrativeText: updateCelebrativeText,
                           ),
                         ),
                       );
@@ -204,50 +175,45 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(
-                  left: 25,
-                  right: 25,
-                  bottom: 25,
-                  top: 25,
-                ),
-                child: Expanded(
-                  child: CupertinoTextField(
-                    maxLines: null,
-                    minLines: 1,
-                    controller: _newTask,
-                    focusNode: _focusNode,
-                    padding: const EdgeInsets.all(16),
-                    style: GoogleFonts.quicksand(
-                      color: const Color.fromARGB(255, 239, 239, 239),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    placeholder: "Wassup?",
-                    placeholderStyle: const TextStyle(color: Colors.grey),
-                    decoration: BoxDecoration(
-                      color: Colors.transparent,
-                      border: Border.all(
-                          color: _focusNode.hasFocus
-                              ? const Color(0xFFD5B858)
-                              : Colors.grey,
-                          width: 2),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    cursorColor: const Color(0xFFD5B858),
-                    suffix: _focusNode.hasFocus
-                        ? CupertinoButton(
-                            onPressed: () {
-                              saveNewTask();
-                              _focusNode.unfocus();
-                            },
-                            child: const Icon(
-                              CupertinoIcons.add,
-                              size: 23,
-                              color: Color(0xFFD5B858),
-                            ),
-                          )
-                        : null,
+                padding: const EdgeInsets.all(25),
+                child: CupertinoTextField(
+                  maxLines: null,
+                  minLines: 1,
+                  controller: _newTask,
+                  focusNode: _focusNode,
+                  padding: const EdgeInsets.all(16),
+                  style: GoogleFonts.quicksand(
+                    color: const Color.fromARGB(255, 239, 239, 239),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
                   ),
+                  placeholder: celebrativeText,
+                  placeholderStyle: const TextStyle(
+                    color: Colors.grey,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    border: Border.all(
+                        color: _focusNode.hasFocus
+                            ? const Color(0xFFD5B858)
+                            : Colors.grey,
+                        width: 2),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  cursorColor: const Color(0xFFD5B858),
+                  suffix: _focusNode.hasFocus
+                      ? CupertinoButton(
+                          onPressed: () {
+                            saveNewTask();
+                            _focusNode.unfocus();
+                          },
+                          child: const Icon(
+                            CupertinoIcons.add,
+                            size: 23,
+                            color: Color(0xFFD5B858),
+                          ),
+                        )
+                      : null,
                 ),
               ),
             ],
