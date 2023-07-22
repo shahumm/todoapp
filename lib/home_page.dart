@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
+import 'package:provider/provider.dart';
 import 'package:todoapp/database.dart';
+import 'package:todoapp/provider.dart';
 import 'package:todoapp/todo_tile.dart';
 
 class HomePage extends StatefulWidget {
@@ -19,20 +23,27 @@ class _HomePageState extends State<HomePage> {
   final FocusNode _focusNode = FocusNode();
   bool isTextFieldFocused = false;
 
-  String celebrativeText = "New Task";
+  int textFieldMaxLines = 1;
 
-  // Update celebrative text
-  void updateCelebrativeText(String text) {
-    setState(() {
-      celebrativeText = text;
-    });
-  }
+  // Placeholder
+  String celebrativeText = "New Task";
 
   // Referencing the Database
   final _box = Hive.box('dataBox');
 
   // Instantiation of Database
   Database db = Database();
+
+  Widget interactIcon = const Icon(
+    CupertinoIcons.bubble_left,
+    size: 23,
+    color: Colors.grey,
+  );
+
+  Widget theSnail = const Text(
+    '🐌',
+    style: TextStyle(fontSize: 18),
+  );
 
   // App First Runs
   @override
@@ -51,26 +62,45 @@ class _HomePageState extends State<HomePage> {
     super.initState();
 
     _focusNode.addListener(() {
-      setState(() {
-        isTextFieldFocused = _focusNode.hasFocus;
+      if (_focusNode.hasFocus) {
+        context.read<Placehold>().updatePlaceholderWithoutTimer(
+              "About time! Lesss gooo!",
+            );
+      } else {
+        context.read<Placehold>().resetText();
+      }
+    });
+  }
+
+  // That Tickled
+  void thatTickled() {
+    int time = 5000;
+    context.read<Placehold>().updatePlaceholder(
+          "You thought it was a button but it was me, a Snail, all along! That kinda tickled btw.",
+          time,
+        );
+
+    setState(() {
+      textFieldMaxLines = 3;
+      interactIcon = theSnail;
+
+      Timer(Duration(milliseconds: time), () {
+        setState(() {
+          interactIcon = const Icon(
+            CupertinoIcons.bubble_left,
+            size: 23,
+            color: Colors.grey,
+          );
+        });
       });
     });
   }
 
-  // Checkbox Tapped
-  // void updateCheckbox(bool? value, int index) {
-  //   setState(() {
-  //     db.todoList[index][1] = !db.todoList[index][1];
-  //   });
-  //   db.updateDatabase();
-  // }
-
-  // Save Task
+// Save Task
   void saveNewTask() {
     setState(() {
       db.todoList.add([_newTask.text, false]);
     });
-
     _newTask.clear();
     db.updateDatabase();
   }
@@ -97,9 +127,8 @@ class _HomePageState extends State<HomePage> {
         _focusNode.unfocus();
       },
       child: Scaffold(
-        backgroundColor: const Color.fromARGB(255, 24, 24, 24),
+        backgroundColor: Color.fromARGB(255, 21, 21, 21),
         extendBodyBehindAppBar: true,
-
         // Tasks Being Built
         body: SafeArea(
           top: false,
@@ -159,14 +188,9 @@ class _HomePageState extends State<HomePage> {
                           child: TodoTile(
                             taskName: db.todoList[reversedIndex][0],
                             taskCompleted: db.todoList[reversedIndex][1],
-                            // onChanged: (value) {
-                            //   updateCheckbox(value, reversedIndex);
-                            // },
                             deleteFunction: (p0) => removeTask,
                             index: reversedIndex,
                             database: db,
-
-                            updateCelebrativeText: updateCelebrativeText,
                           ),
                         ),
                       );
@@ -176,44 +200,63 @@ class _HomePageState extends State<HomePage> {
               ),
               Padding(
                 padding: const EdgeInsets.all(25),
-                child: CupertinoTextField(
-                  maxLines: null,
-                  minLines: 1,
-                  controller: _newTask,
-                  focusNode: _focusNode,
-                  padding: const EdgeInsets.all(16),
-                  style: GoogleFonts.quicksand(
-                    color: const Color.fromARGB(255, 239, 239, 239),
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                child: AnimatedSize(
+                  duration: const Duration(
+                    milliseconds: 100,
                   ),
-                  placeholder: celebrativeText,
-                  placeholderStyle: const TextStyle(
-                    color: Colors.grey,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.transparent,
-                    border: Border.all(
-                        color: _focusNode.hasFocus
-                            ? const Color(0xFFD5B858)
-                            : Colors.grey,
-                        width: 2),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  cursorColor: const Color(0xFFD5B858),
-                  suffix: _focusNode.hasFocus
-                      ? CupertinoButton(
-                          onPressed: () {
-                            saveNewTask();
-                            _focusNode.unfocus();
-                          },
-                          child: const Icon(
-                            CupertinoIcons.add,
-                            size: 23,
-                            color: Color(0xFFD5B858),
+                  curve: Curves.easeIn,
+                  child: CupertinoTextField(
+                    key: const ValueKey('veryUnique'),
+                    maxLines: textFieldMaxLines,
+                    minLines: 1,
+                    controller: _newTask,
+                    focusNode: _focusNode,
+                    padding: const EdgeInsets.all(16),
+                    style: GoogleFonts.quicksand(
+                      color: const Color.fromARGB(255, 239, 239, 239),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    placeholder: context.watch<Placehold>().text,
+                    placeholderStyle: const TextStyle(
+                      color: Colors.grey,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      border: Border.all(
+                          color: _focusNode.hasFocus
+                              ? const Color(0xFFD5B858)
+                              : Colors.grey,
+                          width: 2),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    cursorColor: const Color(0xFFD5B858),
+                    suffix: _focusNode.hasFocus
+                        ? CupertinoButton(
+                            onPressed: () {
+                              if (_newTask.text.trim().isEmpty) {
+                                context.read<Placehold>().updatePlaceholder(
+                                      "Umm, this is not how it works...",
+                                      5000,
+                                    );
+                              } else {
+                                saveNewTask();
+                                _focusNode.unfocus();
+                              }
+                            },
+                            child: const Icon(
+                              CupertinoIcons.add,
+                              size: 23,
+                              color: Color(0xFFD5B858),
+                            ),
+                          )
+                        : CupertinoButton(
+                            onPressed: () {
+                              thatTickled();
+                            },
+                            child: interactIcon,
                           ),
-                        )
-                      : null,
+                  ),
                 ),
               ),
             ],
@@ -221,5 +264,14 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
+  }
+}
+
+class Holder extends StatelessWidget {
+  const Holder({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(context.watch<Placehold>().text, key: const Key('veryUnique'));
   }
 }
