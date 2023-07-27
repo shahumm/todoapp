@@ -1,16 +1,7 @@
-# todoapp
+# **🎉 Celebratory Todo App**
 
-A new Flutter project.
+I rely heavily on todo lists, but I often felt that the simple checkbox didn’t give me enough dopamine or feeling of accomplishment that would possibly encourage me to complete even more tasks. So, I built myself a todo app that extends the satisfying check animation by actually celebrating every tap or effort in hindsight! 
+<br></br>
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+![screenshot](https://res.cloudinary.com/dw095oyal/image/upload/v1690471307/917shots_so_qqamjp.jpg)
+<br></br>
