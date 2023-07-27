@@ -3,7 +3,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todoapp/home_page.dart';
-import 'package:todoapp/intro_screen.dart';
+// import 'package:todoapp/intro_screen.dart';
 import 'package:todoapp/provider.dart';
 
 bool nameAsked = true;
@@ -41,9 +41,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         brightness: Brightness.dark,
       ),
-      home: nameAsked
-          ? const UserName()
-          : HomePage(userName: UserName.getUserName()),
+      home: const HomePage(),
       debugShowCheckedModeBanner: false,
     );
   }

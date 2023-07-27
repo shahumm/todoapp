@@ -10,8 +10,7 @@ import 'package:todoapp/provider.dart';
 import 'package:todoapp/todo_tile.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key, required this.userName});
-  final String userName;
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -51,15 +50,19 @@ class _HomePageState extends State<HomePage> {
     if (_box.get("TodoList") == null) {
       // Database doesn't exist
       db.welcomeData();
-      db.updateName(widget.userName);
+      // db.updateName(widget.userName);
     } else {
       // Database already exists
       db.readDatabase();
-      db.updateName(widget.userName);
+      // db.updateName(widget.userName);
     }
     db.readName();
 
     super.initState();
+
+    context.read<Placehold>().updatePlaceholderWithoutTimer(
+          "Eeey Wassup, Shahum? 👀",
+        );
 
     _focusNode.addListener(() {
       if (_focusNode.hasFocus) {
@@ -127,7 +130,7 @@ class _HomePageState extends State<HomePage> {
         _focusNode.unfocus();
       },
       child: Scaffold(
-        backgroundColor: Color.fromARGB(255, 21, 21, 21),
+        backgroundColor: const Color.fromARGB(255, 21, 21, 21),
         extendBodyBehindAppBar: true,
         // Tasks Being Built
         body: SafeArea(

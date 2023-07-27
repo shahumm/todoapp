@@ -10,7 +10,7 @@ class Database {
   // First Time Opening the App
   void welcomeData() {
     todoList = [
-      ["Download Increment", true],
+      ["Download Todo App", true],
     ];
   }
 
