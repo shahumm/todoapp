@@ -86,7 +86,7 @@ class _TodoTileState extends State<TodoTile> {
     }
   }
 
-  // Modify Task Name According to Date's Presence
+  // Modifying Task Name According to Date's Presence
   String conditionalTaskName(bool hasDate, String keyword) {
     int keywordIndex = modifiedTask.indexOf(keyword);
     if (hasDate) {
@@ -99,38 +99,40 @@ class _TodoTileState extends State<TodoTile> {
   String getTaskTime() {
     int keywordIndex = modifiedTask.indexOf(keyword);
     if (keywordIndex != -1 && keywordIndex + 8 <= modifiedTask.length) {
-      // Extract the substring from keywordIndex + 3 to keywordIndex + 8
       String taskTimeSubstring =
           modifiedTask.substring(keywordIndex + 3, keywordIndex + 8).trim();
 
-      // If the substring contains "at" or "on" (or other unexpected characters), remove them
       taskTimeSubstring =
           taskTimeSubstring.replaceAll(RegExp(r'\b(at|on)\b'), '').trim();
 
-      // Validate the extracted task time format
       if (taskTimeSubstring.length == 5) {
         return taskTimeSubstring;
       }
     }
-
-    // Return an empty string if task time is not found or the format is incorrect
-    return "";
+    return "bleh";
   }
 
   String formatRemainingTime(int hours, int minutes) {
     if (hours == 0 && minutes == 0) {
+      timeExceeded = true;
       return "Time Exceeded";
     } else if (hours == 1 && minutes == 1) {
+      timeExceeded = false;
       return "in $hours hour and $minutes minute";
     } else if (hours == 1) {
+      timeExceeded = false;
       return "in $hours hour and $minutes minutes";
     } else if (minutes == 1) {
+      timeExceeded = false;
       return "in $hours hours and $minutes minute";
     } else if (hours == 0) {
+      timeExceeded = false;
       return "in $minutes minutes";
     } else if (minutes == 0) {
+      timeExceeded = false;
       return "in $hours hours";
     } else {
+      timeExceeded = false;
       return "in $hours hours and $minutes minutes";
     }
   }
@@ -138,27 +140,20 @@ class _TodoTileState extends State<TodoTile> {
   String remainingTime() {
     // Current Time
     DateTime now = DateTime.now();
-    // DateFormat formatter = DateFormat.jm();
-    // String currentTime = formatter.format(now);
 
     // Time from Task
     String newTaskTime = getTaskTime();
 
-    DateTime extractedTaskDateTime = DateFormat('yyyy-MM-dd H:mm')
+    DateTime extractedTaskTime = DateFormat('yyyy-MM-dd H:mm')
         .parse('${now.year}-${now.month}-${now.day} $newTaskTime');
 
-    if (extractedTaskDateTime.isBefore(now)) {
-      setState(() {
-        timeExceeded = true;
-      });
+    if (!timeExceeded && extractedTaskTime.isBefore(now)) {
+      extractedTaskTime = extractedTaskTime.add(const Duration(days: 1));
+    } else if (timeExceeded) {
       return "Time Exceeded";
-    } else {
-      setState(() {
-        timeExceeded = false;
-      });
     }
 
-    Duration remainingDuration = extractedTaskDateTime.difference(now);
+    Duration remainingDuration = extractedTaskTime.difference(now);
     int hours = remainingDuration.inHours;
     int minutes = remainingDuration.inMinutes.remainder(60).abs();
 
@@ -254,7 +249,7 @@ class _TodoTileState extends State<TodoTile> {
                 ),
               ),
             ),
-            if (hasDate(modifiedTask))
+            if (hasDate(modifiedTask) && !isChecked)
               Container(
                 width: 400,
                 height: 30,
@@ -265,7 +260,7 @@ class _TodoTileState extends State<TodoTile> {
                   ),
                   color: timeExceeded
                       ? const Color.fromARGB(70, 213, 88, 88)
-                      : const Color.fromARGB(71, 213, 184, 88),
+                      : const Color.fromARGB(60, 213, 184, 88),
                 ),
                 child: Align(
                   alignment: Alignment.center,

@@ -268,15 +268,26 @@ class _HomePageState extends State<HomePage> {
                           )
                         : GestureDetector(
                             onLongPress: () {
-                              setState(() {
-                                isLongPress = true;
-                                context
-                                    .read<Placehold>()
-                                    .updatePlaceholderWithoutTimer(
-                                      "All tasks deleted!",
-                                    );
-                              });
-                              removeAllTasks();
+                              if (db.todoList.isNotEmpty) {
+                                setState(() {
+                                  isLongPress = true;
+                                  context
+                                      .read<Placehold>()
+                                      .updatePlaceholderWithoutTimer(
+                                        "All tasks deleted!",
+                                      );
+                                });
+                                removeAllTasks();
+                              } else {
+                                setState(() {
+                                  isLongPress = true;
+                                  context
+                                      .read<Placehold>()
+                                      .updatePlaceholderWithoutTimer(
+                                        "Locating nearby eye specialists...",
+                                      );
+                                });
+                              }
                             },
                             onLongPressEnd: (details) {
                               setState(() {
