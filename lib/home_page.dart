@@ -229,7 +229,7 @@ class _HomePageState extends State<HomePage> {
                     style: GoogleFonts.quicksand(
                       color: const Color.fromARGB(255, 239, 239, 239),
                       fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                     ),
                     placeholder: context.watch<Placehold>().text,
                     placeholderStyle: const TextStyle(

@@ -274,7 +274,7 @@ class _TodoTileState extends State<TodoTile> {
                     style: GoogleFonts.quicksand(
                       color: Colors.white,
                       fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
