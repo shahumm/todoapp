@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -21,11 +20,7 @@ class _HomePageState extends State<HomePage> {
   final _newTask = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   bool isTextFieldFocused = false;
-
   int textFieldMaxLines = 1;
-
-  // Placeholder
-  String celebrativeText = "New Task";
 
   // Referencing the Database
   final _box = Hive.box('dataBox');
@@ -33,6 +28,7 @@ class _HomePageState extends State<HomePage> {
   // Instantiation of Database
   Database db = Database();
 
+  // Custom Widgets
   Widget interactIcon = const Icon(
     CupertinoIcons.bubble_left,
     size: 23,
@@ -43,6 +39,11 @@ class _HomePageState extends State<HomePage> {
     '🐌',
     style: TextStyle(fontSize: 18),
   );
+
+  // Current Date
+  DateTime currentDate() {
+    return DateTime.now();
+  }
 
   // App First Runs
   @override
@@ -60,9 +61,9 @@ class _HomePageState extends State<HomePage> {
 
     super.initState();
 
-    context.read<Placehold>().updatePlaceholderWithoutTimer(
-          "Eeey Wassup, Shahum? 👀",
-        );
+    Future.delayed(Duration.zero, () {
+      context.read<Placehold>().defaultText();
+    });
 
     _focusNode.addListener(() {
       if (_focusNode.hasFocus) {
@@ -70,7 +71,7 @@ class _HomePageState extends State<HomePage> {
               "About time! Lesss gooo!",
             );
       } else {
-        context.read<Placehold>().resetText();
+        context.read<Placehold>().defaultText();
       }
     });
   }

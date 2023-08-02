@@ -43,6 +43,7 @@ dependencies:
   flutter_animate: ^4.2.0
   confetti: ^0.7.0
   provider: ^6.0.5
+  intl: ^0.18.1
 
 dev_dependencies:
   flutter_test:
