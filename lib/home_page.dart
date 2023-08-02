@@ -22,6 +22,8 @@ class _HomePageState extends State<HomePage> {
   bool isTextFieldFocused = false;
   int textFieldMaxLines = 1;
 
+  bool isLongPress = false;
+
   // Referencing the Database
   final _box = Hive.box('dataBox');
 
@@ -30,7 +32,7 @@ class _HomePageState extends State<HomePage> {
 
   // Custom Widgets
   Widget interactIcon = const Icon(
-    CupertinoIcons.bubble_left,
+    CupertinoIcons.circle,
     size: 23,
     color: Colors.grey,
   );
@@ -91,7 +93,7 @@ class _HomePageState extends State<HomePage> {
       Timer(Duration(milliseconds: time), () {
         setState(() {
           interactIcon = const Icon(
-            CupertinoIcons.bubble_left,
+            CupertinoIcons.circle,
             size: 23,
             color: Colors.grey,
           );
@@ -115,6 +117,14 @@ class _HomePageState extends State<HomePage> {
       db.todoList.removeAt(index);
     });
 
+    db.updateDatabase();
+  }
+
+  // Remove All Tasks
+  void removeAllTasks() {
+    setState(() {
+      db.todoList.clear();
+    });
     db.updateDatabase();
   }
 
@@ -230,7 +240,9 @@ class _HomePageState extends State<HomePage> {
                       border: Border.all(
                           color: _focusNode.hasFocus
                               ? const Color(0xFFD5B858)
-                              : Colors.grey,
+                              : isLongPress
+                                  ? Colors.red
+                                  : Colors.grey,
                           width: 2),
                       borderRadius: BorderRadius.circular(15),
                     ),
@@ -254,11 +266,39 @@ class _HomePageState extends State<HomePage> {
                               color: Color(0xFFD5B858),
                             ),
                           )
-                        : CupertinoButton(
-                            onPressed: () {
-                              thatTickled();
+                        : GestureDetector(
+                            onLongPress: () {
+                              setState(() {
+                                isLongPress = true;
+                                context
+                                    .read<Placehold>()
+                                    .updatePlaceholderWithoutTimer(
+                                      "All tasks deleted!",
+                                    );
+                              });
+                              removeAllTasks();
                             },
-                            child: interactIcon,
+                            onLongPressEnd: (details) {
+                              setState(() {
+                                isLongPress = false;
+                                context.read<Placehold>().defaultText();
+                              });
+                            },
+                            child: CupertinoButton(
+                              onPressed: () {
+                                if (isLongPress) {
+                                } else {
+                                  thatTickled();
+                                }
+                              },
+                              child: isLongPress
+                                  ? const Icon(
+                                      CupertinoIcons.delete,
+                                      size: 23,
+                                      color: Colors.grey,
+                                    )
+                                  : interactIcon,
+                            ),
                           ),
                   ),
                 ),

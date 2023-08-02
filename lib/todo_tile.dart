@@ -121,17 +121,17 @@ class _TodoTileState extends State<TodoTile> {
     if (hours == 0 && minutes == 0) {
       return "Time Exceeded";
     } else if (hours == 1 && minutes == 1) {
-      return "$hours hour and $minutes minute";
+      return "in $hours hour and $minutes minute";
     } else if (hours == 1) {
-      return "$hours hour and $minutes minutes";
+      return "in $hours hour and $minutes minutes";
     } else if (minutes == 1) {
-      return "$hours hours and $minutes minute";
+      return "in $hours hours and $minutes minute";
     } else if (hours == 0) {
-      return "$minutes minutes";
+      return "in $minutes minutes";
     } else if (minutes == 0) {
-      return "$hours hours";
+      return "in $hours hours";
     } else {
-      return "$hours hours and $minutes minutes";
+      return "in $hours hours and $minutes minutes";
     }
   }
 
@@ -270,7 +270,7 @@ class _TodoTileState extends State<TodoTile> {
                 child: Align(
                   alignment: Alignment.center,
                   child: Text(
-                    remainingTime().toString(),
+                    remainingTime(),
                     style: GoogleFonts.quicksand(
                       color: Colors.white,
                       fontSize: 16,
