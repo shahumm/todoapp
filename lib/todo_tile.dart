@@ -47,7 +47,7 @@ class _TodoTileState extends State<TodoTile> {
 
   // Edit Task
   bool isEditing = false;
-  TextEditingController _textEditingController = TextEditingController();
+  final TextEditingController _textEditingController = TextEditingController();
 
   @override
   void initState() {
@@ -177,7 +177,7 @@ class _TodoTileState extends State<TodoTile> {
           setState(() {
             context
                 .read<Placehold>()
-                .updatePlaceholder("Cannot change what has passed.", 2000);
+                .updatePlaceholder("You cannot change the past.", 2000);
           });
         }
       },
@@ -213,11 +213,7 @@ class _TodoTileState extends State<TodoTile> {
                           decoration: null,
                           controller: _textEditingController,
                           onChanged: (value) {
-                            setState(() {
-                              Timer(const Duration(milliseconds: 1000), () {
-                                modifiedTask = value;
-                              });
-                            });
+                            modifiedTask = value;
                           },
                           onSubmitted: (value) {
                             setState(() {
@@ -240,8 +236,8 @@ class _TodoTileState extends State<TodoTile> {
                             color: isChecked
                                 ? Colors.grey
                                 : const Color.fromARGB(255, 239, 239, 239),
-                            fontSize: 19,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
                             decoration: isChecked
                                 ? TextDecoration.lineThrough
                                 : TextDecoration.none,
