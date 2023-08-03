@@ -34,4 +34,10 @@ class Database {
     name = newName;
     _box.put("Name", name);
   }
+
+  // After Editing
+  void updateTaskName(int index, String newName) {
+    todoList[index][0] = newName;
+    updateDatabase();
+  }
 }

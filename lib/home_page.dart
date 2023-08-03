@@ -219,98 +219,108 @@ class _HomePageState extends State<HomePage> {
                     milliseconds: 100,
                   ),
                   curve: Curves.easeIn,
-                  child: CupertinoTextField(
-                    key: const ValueKey('veryUnique'),
-                    maxLines: textFieldMaxLines,
-                    minLines: 1,
-                    controller: _newTask,
-                    focusNode: _focusNode,
-                    padding: const EdgeInsets.all(16),
-                    style: GoogleFonts.quicksand(
-                      color: const Color.fromARGB(255, 239, 239, 239),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    placeholder: context.watch<Placehold>().text,
-                    placeholderStyle: const TextStyle(
-                      color: Colors.grey,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.transparent,
-                      border: Border.all(
-                          color: _focusNode.hasFocus
-                              ? const Color(0xFFD5B858)
-                              : isLongPress
-                                  ? Colors.red
-                                  : Colors.grey,
-                          width: 2),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    cursorColor: const Color(0xFFD5B858),
-                    suffix: _focusNode.hasFocus
-                        ? CupertinoButton(
-                            onPressed: () {
-                              if (_newTask.text.trim().isEmpty) {
-                                context.read<Placehold>().updatePlaceholder(
-                                      "Umm, this is not how it works...",
-                                      5000,
-                                    );
-                              } else {
-                                saveNewTask();
-                                _focusNode.unfocus();
-                              }
-                            },
-                            child: const Icon(
-                              CupertinoIcons.add,
-                              size: 23,
-                              color: Color(0xFFD5B858),
-                            ),
-                          )
-                        : GestureDetector(
-                            onLongPress: () {
-                              if (db.todoList.isNotEmpty) {
-                                setState(() {
-                                  isLongPress = true;
-                                  context
-                                      .read<Placehold>()
-                                      .updatePlaceholderWithoutTimer(
-                                        "All tasks deleted!",
-                                      );
-                                });
-                                removeAllTasks();
-                              } else {
-                                setState(() {
-                                  isLongPress = true;
-                                  context
-                                      .read<Placehold>()
-                                      .updatePlaceholderWithoutTimer(
-                                        "Locating nearby eye specialists...",
-                                      );
-                                });
-                              }
-                            },
-                            onLongPressEnd: (details) {
-                              setState(() {
-                                isLongPress = false;
-                                context.read<Placehold>().defaultText();
-                              });
-                            },
-                            child: CupertinoButton(
-                              onPressed: () {
-                                if (isLongPress) {
-                                } else {
-                                  thatTickled();
-                                }
-                              },
-                              child: isLongPress
-                                  ? const Icon(
-                                      CupertinoIcons.delete,
-                                      size: 23,
-                                      color: Colors.grey,
-                                    )
-                                  : interactIcon,
-                            ),
+                  child: Consumer<Placehold>(
+                    builder: (context, placehold, _) {
+                      if (!placehold.isEditing) {
+                        return CupertinoTextField(
+                          key: const ValueKey('veryUnique'),
+                          maxLines: textFieldMaxLines,
+                          minLines: 1,
+                          controller: _newTask,
+                          focusNode: _focusNode,
+                          padding: const EdgeInsets.all(16),
+                          style: GoogleFonts.quicksand(
+                            color: const Color.fromARGB(255, 239, 239, 239),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
                           ),
+                          placeholder: context.watch<Placehold>().text,
+                          placeholderStyle: const TextStyle(
+                            color: Colors.grey,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            border: Border.all(
+                                color: _focusNode.hasFocus
+                                    ? const Color(0xFFD5B858)
+                                    : isLongPress
+                                        ? Colors.red
+                                        : Colors.grey,
+                                width: 2),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          cursorColor: const Color(0xFFD5B858),
+                          suffix: _focusNode.hasFocus
+                              ? CupertinoButton(
+                                  onPressed: () {
+                                    if (_newTask.text.trim().isEmpty) {
+                                      context
+                                          .read<Placehold>()
+                                          .updatePlaceholder(
+                                            "Umm, this is not how it works...",
+                                            5000,
+                                          );
+                                    } else {
+                                      saveNewTask();
+                                      _focusNode.unfocus();
+                                    }
+                                  },
+                                  child: const Icon(
+                                    CupertinoIcons.add,
+                                    size: 23,
+                                    color: Color(0xFFD5B858),
+                                  ),
+                                )
+                              : GestureDetector(
+                                  onLongPress: () {
+                                    if (db.todoList.isNotEmpty) {
+                                      setState(() {
+                                        isLongPress = true;
+                                        context
+                                            .read<Placehold>()
+                                            .updatePlaceholderWithoutTimer(
+                                              "All tasks deleted!",
+                                            );
+                                      });
+                                      removeAllTasks();
+                                    } else {
+                                      setState(() {
+                                        isLongPress = true;
+                                        context
+                                            .read<Placehold>()
+                                            .updatePlaceholderWithoutTimer(
+                                              "Locating nearby eye specialists...",
+                                            );
+                                      });
+                                    }
+                                  },
+                                  onLongPressEnd: (details) {
+                                    setState(() {
+                                      isLongPress = false;
+                                      context.read<Placehold>().defaultText();
+                                    });
+                                  },
+                                  child: CupertinoButton(
+                                    onPressed: () {
+                                      if (isLongPress) {
+                                      } else {
+                                        thatTickled();
+                                      }
+                                    },
+                                    child: isLongPress
+                                        ? const Icon(
+                                            CupertinoIcons.delete,
+                                            size: 23,
+                                            color: Colors.grey,
+                                          )
+                                        : interactIcon,
+                                  ),
+                                ),
+                        );
+                      } else {
+                        return const SizedBox();
+                      }
+                    },
                   ),
                 ),
               ),

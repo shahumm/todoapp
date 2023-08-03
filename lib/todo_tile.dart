@@ -41,8 +41,13 @@ class _TodoTileState extends State<TodoTile> {
   String newTask = '';
   String keyword = "";
 
+  // Time
   String taskTime = "";
   bool timeExceeded = false;
+
+  // Edit Task
+  bool isEditing = false;
+  TextEditingController _textEditingController = TextEditingController();
 
   @override
   void initState() {
@@ -58,6 +63,8 @@ class _TodoTileState extends State<TodoTile> {
     });
 
     keyword = hasKeyword();
+
+    _textEditingController.text = modifiedTask;
   }
 
   // Check If Date is Present
@@ -73,13 +80,10 @@ class _TodoTileState extends State<TodoTile> {
     bool by = modifiedTask.toLowerCase().contains("by");
 
     if (at) {
-      // print("at");
       return "at";
     } else if (on) {
-      // print("on");
       return "on";
     } else if (by) {
-      // print("by");
       return "by";
     } else {
       return "0";
@@ -162,119 +166,199 @@ class _TodoTileState extends State<TodoTile> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(left: 24, right: 24),
-      decoration: BoxDecoration(
-        color: isChecked
-            ? const Color.fromARGB(255, 28, 28, 28)
-            : const Color.fromARGB(255, 33, 33, 33),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: hasDate(widget.taskName) ? 0.0 : 5.0,
-          top: 5.0,
+    return GestureDetector(
+      onLongPress: () {
+        if (!isChecked) {
+          setState(() {
+            context.read<Placehold>().updateEditStatus(true);
+            isEditing = true;
+          });
+        } else {
+          setState(() {
+            context
+                .read<Placehold>()
+                .updatePlaceholder("Cannot change what has passed.", 2000);
+          });
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.only(left: 24, right: 24),
+        decoration: BoxDecoration(
+          color: isChecked
+              ? const Color.fromARGB(255, 28, 28, 28)
+              : const Color.fromARGB(255, 33, 33, 33),
+          borderRadius: BorderRadius.circular(15),
+          border: isEditing
+              ? Border.all(
+                  color: const Color(0xFFD5B858),
+                  width: 1.5,
+                )
+              : null,
         ),
-        child: Column(
-          children: [
-            ListTile(
-              title: Padding(
-                padding: const EdgeInsets.only(left: 8.0),
-                child: Text(
-                  conditionalTaskName(hasDate(widget.taskName), keyword),
-                  style: GoogleFonts.quicksand(
-                    color: isChecked
-                        ? Colors.grey
-                        : const Color.fromARGB(255, 239, 239, 239),
-                    fontSize: 19,
-                    fontWeight: FontWeight.w600,
-                    decoration: isChecked
-                        ? TextDecoration.lineThrough
-                        : TextDecoration.none,
-                    decorationColor: Colors.white,
-                  ),
-                ),
-              ),
-              trailing: ConfettiWidget(
-                confettiController: controller,
-                blastDirectionality: BlastDirectionality.explosive,
-                emissionFrequency: 0,
-                gravity: 0.8,
-                maxBlastForce: 50,
-                numberOfParticles: 15,
-                shouldLoop: false,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  child: MSHCheckbox(
-                    size: 33,
-                    style: MSHCheckboxStyle.stroke,
-                    duration: const Duration(milliseconds: 500),
-                    colorConfig: MSHColorConfig.fromCheckedUncheckedDisabled(
-                      checkedColor: const Color(0xFFD5B858),
-                      uncheckedColor: const Color.fromARGB(255, 93, 93, 93),
-                    ),
-                    value: isChecked,
-                    onChanged: (value) {
-                      setState(
-                        () {
-                          isChecked = value;
-                          if (isChecked) {
-                            controller.play();
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: hasDate(widget.taskName) ? 0.0 : 5.0,
+            top: 5.0,
+          ),
+          child: Column(
+            children: [
+              ListTile(
+                title: Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: context.read<Placehold>().isEditing
 
-                            Timer(const Duration(milliseconds: 500), () {
-                              controller.stop();
+                      // Editing Text Field
+                      ? TextField(
+                          autofocus: true,
+                          decoration: null,
+                          controller: _textEditingController,
+                          onChanged: (value) {
+                            setState(() {
+                              Timer(const Duration(milliseconds: 1000), () {
+                                modifiedTask = value;
+                              });
+                            });
+                          },
+                          onSubmitted: (value) {
+                            setState(() {
+                              context.read<Placehold>().updateEditStatus(false);
+                              isEditing = false;
                             });
 
-                            // Timer(const Duration(milliseconds: 1000), () {
-                            //   context.read<Placehold>().updatePlaceholder(
-                            //         "Woohoo!",
-                            //         1000,
-                            //       );
-                            // });
-                            // context.read<Placehold>().boxChecked("Hi");
-                          } else {
-                            Timer(const Duration(milliseconds: 500), () {
-                              context.read<Placehold>().updatePlaceholder(
-                                    "Oh, nevermind.",
-                                    500,
-                                  );
-                            });
-                          }
-                        },
-                      );
-                      widget.database.todoList[widget.index][1] = isChecked;
-                      widget.database.updateDatabase();
-                    },
+                            widget.database.updateTaskName(widget.index, value);
+                          },
+                          style: const TextStyle(
+                            color: Color.fromARGB(255, 239, 239, 239),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        )
+                      : Text(
+                          conditionalTaskName(
+                              hasDate(widget.taskName), keyword),
+                          style: GoogleFonts.quicksand(
+                            color: isChecked
+                                ? Colors.grey
+                                : const Color.fromARGB(255, 239, 239, 239),
+                            fontSize: 19,
+                            fontWeight: FontWeight.w600,
+                            decoration: isChecked
+                                ? TextDecoration.lineThrough
+                                : TextDecoration.none,
+                            decorationColor: Colors.white,
+                          ),
+                        ),
+                ),
+                trailing: ConfettiWidget(
+                  confettiController: controller,
+                  blastDirectionality: BlastDirectionality.explosive,
+                  emissionFrequency: 0,
+                  gravity: 0.8,
+                  maxBlastForce: 50,
+                  numberOfParticles: 15,
+                  shouldLoop: false,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    child: isEditing
+                        ? MSHCheckbox(
+                            size: 33,
+                            style: MSHCheckboxStyle.fillScaleColor,
+                            duration: const Duration(milliseconds: 1000),
+                            colorConfig:
+                                MSHColorConfig.fromCheckedUncheckedDisabled(
+                              checkedColor:
+                                  const Color.fromARGB(125, 213, 184, 88),
+                            ),
+                            value: true,
+                            onChanged: (value) {
+                              setState(() {
+                                context
+                                    .read<Placehold>()
+                                    .updateEditStatus(false);
+                                isEditing = false;
+                              });
+
+                              widget.database
+                                  .updateTaskName(widget.index, modifiedTask);
+                            })
+                        : MSHCheckbox(
+                            size: 33,
+                            style: MSHCheckboxStyle.stroke,
+                            duration: const Duration(milliseconds: 500),
+                            colorConfig:
+                                MSHColorConfig.fromCheckedUncheckedDisabled(
+                              checkedColor: const Color(0xFFD5B858),
+                              uncheckedColor:
+                                  const Color.fromARGB(255, 93, 93, 93),
+                            ),
+                            value: isChecked,
+                            onChanged: (value) {
+                              setState(
+                                () {
+                                  isChecked = value;
+                                  if (isChecked) {
+                                    controller.play();
+
+                                    Timer(const Duration(milliseconds: 500),
+                                        () {
+                                      controller.stop();
+                                    });
+
+                                    // Timer(const Duration(milliseconds: 1000), () {
+                                    //   context.read<Placehold>().updatePlaceholder(
+                                    //         "Woohoo!",
+                                    //         1000,
+                                    //       );
+                                    // });
+                                    // context.read<Placehold>().boxChecked("Hi");
+                                  } else {
+                                    Timer(const Duration(milliseconds: 500),
+                                        () {
+                                      context
+                                          .read<Placehold>()
+                                          .updatePlaceholder(
+                                            "Oh, nevermind.",
+                                            500,
+                                          );
+                                    });
+                                  }
+                                },
+                              );
+                              widget.database.todoList[widget.index][1] =
+                                  isChecked;
+                              widget.database.updateDatabase();
+                            },
+                          ),
                   ),
                 ),
               ),
-            ),
-            if (hasDate(modifiedTask) && !isChecked)
-              Container(
-                width: 400,
-                height: 30,
-                decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(15),
-                    bottomRight: Radius.circular(15),
+              if (hasDate(modifiedTask) && !isChecked)
+                Container(
+                  width: 400,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(15),
+                      bottomRight: Radius.circular(15),
+                    ),
+                    color: timeExceeded
+                        ? const Color.fromARGB(70, 213, 88, 88)
+                        : const Color.fromARGB(60, 213, 184, 88),
                   ),
-                  color: timeExceeded
-                      ? const Color.fromARGB(70, 213, 88, 88)
-                      : const Color.fromARGB(60, 213, 184, 88),
-                ),
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Text(
-                    remainingTime(),
-                    style: GoogleFonts.quicksand(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: Text(
+                      remainingTime(),
+                      style: GoogleFonts.quicksand(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

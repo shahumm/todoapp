@@ -6,6 +6,14 @@ class Placehold with ChangeNotifier {
   String _text = "New Task";
   String get text => _text;
 
+  bool _isEditing = false;
+  bool get isEditing => _isEditing;
+
+  void updateEditStatus(bool status) {
+    _isEditing = status;
+    notifyListeners();
+  }
+
   void updatePlaceholder(String newText, int duration) {
     _text = newText;
     Timer(Duration(milliseconds: duration), () {
@@ -27,9 +35,4 @@ class Placehold with ChangeNotifier {
 
     notifyListeners();
   }
-
-  // void resetText() {
-  //   _text = "New Task";
-  //   notifyListeners();
-  // }
 }
