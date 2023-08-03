@@ -332,14 +332,12 @@ class _TodoTileState extends State<TodoTile> {
                 Container(
                   width: 400,
                   height: 30,
-                  decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.only(
+                  decoration: const BoxDecoration(
+                    borderRadius: BorderRadius.only(
                       bottomLeft: Radius.circular(15),
                       bottomRight: Radius.circular(15),
                     ),
-                    color: timeExceeded
-                        ? const Color.fromARGB(70, 213, 88, 88)
-                        : const Color.fromARGB(60, 213, 184, 88),
+                    color: Color.fromARGB(60, 213, 184, 88),
                   ),
                   child: Align(
                     alignment: Alignment.center,

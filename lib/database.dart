@@ -24,9 +24,14 @@ class Database {
     _box.put("TodoList", todoList);
   }
 
-  // Read Database
   void readName() {
-    name = _box.get("Name");
+    var nameFromBox = _box.get("Name");
+    if (nameFromBox != null && nameFromBox is String) {
+      name = nameFromBox;
+    } else {
+      // If the value in the box is null or not a String, you can provide a default value or handle the error accordingly.
+      name = "Default Name";
+    }
   }
 
   // Update User

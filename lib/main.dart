@@ -1,18 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todoapp/home_page.dart';
 import 'package:todoapp/provider.dart';
 
-bool nameAsked = true;
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Ask For Name Once
-  final preferences = await SharedPreferences.getInstance();
-  nameAsked = preferences.getBool('UserName') ?? true;
 
   // Initializing Hive
   await Hive.initFlutter();
