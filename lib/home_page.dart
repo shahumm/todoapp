@@ -148,11 +148,15 @@ class _HomePageState extends State<HomePage> {
           top: false,
           child: Column(
             children: [
-              Expanded(
+              const Expanded(
                 flex: 2,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(40),
-                  child: const SizedBox(
+                  borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(0),
+                      topRight: Radius.circular(0),
+                      bottomLeft: Radius.circular(50),
+                      bottomRight: Radius.circular(50)),
+                  child: SizedBox(
                     width: double.infinity,
                     child: Image(
                       image: AssetImage("assets/giphy copy.gif"),
