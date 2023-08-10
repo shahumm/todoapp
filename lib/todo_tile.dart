@@ -15,6 +15,7 @@ class TodoTile extends StatefulWidget {
   final Function(BuildContext)? deleteFunction;
   final int index;
   final Database database;
+  final bool isLightMode;
 
   // Constructor
   const TodoTile({
@@ -24,6 +25,7 @@ class TodoTile extends StatefulWidget {
     required this.deleteFunction,
     required this.index,
     required this.database,
+    required this.isLightMode,
   });
 
   @override
@@ -181,20 +183,47 @@ class _TodoTileState extends State<TodoTile> {
           });
         }
       },
-      child: Container(
-        margin: const EdgeInsets.only(left: 24, right: 24),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        margin: const EdgeInsets.only(left: 25, right: 25, bottom: 10),
         decoration: BoxDecoration(
-          color: isChecked
-              ? const Color.fromARGB(255, 28, 28, 28)
-              : const Color.fromARGB(255, 33, 33, 33),
-          borderRadius: BorderRadius.circular(15),
-          border: isEditing
-              ? Border.all(
-                  color: const Color(0xFFD5B858),
-                  width: 1.5,
-                )
-              : null,
-        ),
+            color: widget.isLightMode
+                ? Colors.grey.shade400
+                : const Color.fromARGB(255, 21, 21, 21),
+            borderRadius: BorderRadius.circular(15),
+            border: isEditing
+                ? Border.all(
+                    color: widget.isLightMode
+                        ? const Color(0xFFAB7D00)
+                        : const Color(0xFFD5B858),
+                    width: 1,
+                  )
+                : isChecked
+                    ? Border.all(
+                        color: widget.isLightMode
+                            ? Colors.grey.shade500
+                            : const Color.fromARGB(255, 34, 34, 34),
+                        width: 1,
+                      )
+                    : null,
+
+            // Neumorphism
+            boxShadow: [
+              BoxShadow(
+                color: widget.isLightMode ? Colors.grey.shade600 : Colors.black,
+                offset: isChecked ? const Offset(0, 0) : const Offset(4, 4),
+                blurRadius: isChecked ? 0 : 15,
+                spreadRadius: 0,
+              ),
+              BoxShadow(
+                color: widget.isLightMode
+                    ? Colors.grey.shade300
+                    : const Color.fromARGB(255, 36, 36, 36),
+                offset: isChecked ? const Offset(0, 0) : const Offset(-3, -3),
+                blurRadius: isChecked ? 0 : 15,
+                spreadRadius: 0,
+              )
+            ]),
         child: Padding(
           padding: EdgeInsets.only(
             bottom: hasDate(widget.taskName) ? 0.0 : 5.0,
@@ -223,8 +252,10 @@ class _TodoTileState extends State<TodoTile> {
 
                             widget.database.updateTaskName(widget.index, value);
                           },
-                          style: const TextStyle(
-                            color: Color.fromARGB(255, 239, 239, 239),
+                          style: GoogleFonts.quicksand(
+                            color: widget.isLightMode
+                                ? Colors.grey.shade800
+                                : const Color.fromARGB(255, 239, 239, 239),
                             fontSize: 18,
                             fontWeight: FontWeight.w500,
                           ),
@@ -233,15 +264,21 @@ class _TodoTileState extends State<TodoTile> {
                           conditionalTaskName(
                               hasDate(widget.taskName), keyword),
                           style: GoogleFonts.quicksand(
-                            color: isChecked
-                                ? Colors.grey
-                                : const Color.fromARGB(255, 239, 239, 239),
+                            color: widget.isLightMode
+                                ? isChecked
+                                    ? Colors.grey.shade700
+                                    : Colors.grey.shade900
+                                : isChecked
+                                    ? Colors.grey.shade500
+                                    : Colors.white,
                             fontSize: 18,
                             fontWeight: FontWeight.w500,
                             decoration: isChecked
                                 ? TextDecoration.lineThrough
                                 : TextDecoration.none,
-                            decorationColor: Colors.white,
+                            decorationColor: widget.isLightMode
+                                ? Colors.grey.shade800
+                                : Colors.white,
                           ),
                         ),
                 ),
@@ -262,8 +299,9 @@ class _TodoTileState extends State<TodoTile> {
                             duration: const Duration(milliseconds: 1000),
                             colorConfig:
                                 MSHColorConfig.fromCheckedUncheckedDisabled(
-                              checkedColor:
-                                  const Color.fromARGB(125, 213, 184, 88),
+                              checkedColor: widget.isLightMode
+                                  ? const Color(0xFFAB7D00)
+                                  : const Color.fromARGB(255, 159, 137, 67),
                             ),
                             value: true,
                             onChanged: (value) {
@@ -283,9 +321,12 @@ class _TodoTileState extends State<TodoTile> {
                             duration: const Duration(milliseconds: 500),
                             colorConfig:
                                 MSHColorConfig.fromCheckedUncheckedDisabled(
-                              checkedColor: const Color(0xFFD5B858),
-                              uncheckedColor:
-                                  const Color.fromARGB(255, 93, 93, 93),
+                              checkedColor: widget.isLightMode
+                                  ? const Color(0xFFAB7D00)
+                                  : const Color(0xFFD5B858),
+                              uncheckedColor: widget.isLightMode
+                                  ? Colors.grey.shade500
+                                  : const Color.fromARGB(255, 93, 93, 93),
                             ),
                             value: isChecked,
                             onChanged: (value) {

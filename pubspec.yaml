@@ -44,6 +44,8 @@ dependencies:
   confetti: ^0.7.0
   provider: ^6.0.5
   intl: ^0.18.1
+  flutter_inset_box_shadow: ^1.0.8
+  hidden_drawer_menu: ^3.0.1
 
 dev_dependencies:
   flutter_test:
