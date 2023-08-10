@@ -189,7 +189,7 @@ class _TodoTileState extends State<TodoTile> {
         decoration: BoxDecoration(
             color: widget.isLightMode
                 ? Colors.grey.shade400
-                : const Color.fromARGB(255, 21, 21, 21),
+                : const Color.fromARGB(255, 26, 26, 26),
             borderRadius: BorderRadius.circular(15),
             border: isEditing
                 ? Border.all(
@@ -202,7 +202,7 @@ class _TodoTileState extends State<TodoTile> {
                     ? Border.all(
                         color: widget.isLightMode
                             ? Colors.grey.shade500
-                            : const Color.fromARGB(255, 34, 34, 34),
+                            : const Color.fromARGB(255, 42, 42, 42),
                         width: 1,
                       )
                     : null,
@@ -210,7 +210,9 @@ class _TodoTileState extends State<TodoTile> {
             // Neumorphism
             boxShadow: [
               BoxShadow(
-                color: widget.isLightMode ? Colors.grey.shade600 : Colors.black,
+                color: widget.isLightMode
+                    ? Colors.grey.shade600
+                    : const Color.fromARGB(255, 2, 2, 2),
                 offset: isChecked ? const Offset(0, 0) : const Offset(4, 4),
                 blurRadius: isChecked ? 0 : 15,
                 spreadRadius: 0,
@@ -218,7 +220,7 @@ class _TodoTileState extends State<TodoTile> {
               BoxShadow(
                 color: widget.isLightMode
                     ? Colors.grey.shade300
-                    : const Color.fromARGB(255, 36, 36, 36),
+                    : const Color.fromARGB(255, 42, 42, 42),
                 offset: isChecked ? const Offset(0, 0) : const Offset(-3, -3),
                 blurRadius: isChecked ? 0 : 15,
                 spreadRadius: 0,
@@ -294,7 +296,7 @@ class _TodoTileState extends State<TodoTile> {
                     behavior: HitTestBehavior.translucent,
                     child: isEditing
                         ? MSHCheckbox(
-                            size: 33,
+                            size: 32,
                             style: MSHCheckboxStyle.fillScaleColor,
                             duration: const Duration(milliseconds: 1000),
                             colorConfig:

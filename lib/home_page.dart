@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todoapp/database.dart';
 import 'package:todoapp/provider.dart';
 import 'package:todoapp/todo_tile.dart';
@@ -23,8 +24,9 @@ class _HomePageState extends State<HomePage> {
   int textFieldMaxLines = 1;
 
   bool isLightMode = false;
-
   bool isLongPress = false;
+
+  late SharedPreferences _prefs;
 
   // Referencing the Database
   final _box = Hive.box('dataBox');
@@ -52,14 +54,17 @@ class _HomePageState extends State<HomePage> {
   // App First Runs
   @override
   void initState() {
+    super.initState();
+
+    // Initializing Shared Preferences
+    _initPreferences();
+
     if (_box.get("TodoList") == null) {
       // Database doesn't exist
       db.welcomeData();
-      // db.updateName(widget.userName);
     } else {
       // Database already exists
       db.readDatabase();
-      // db.updateName(widget.userName);
     }
     db.readName();
 
@@ -80,13 +85,27 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  // Initialize Shared Preferences
+  Future<void> _initPreferences() async {
+    _prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isLightMode = _prefs.getBool('isLightMode') ?? false;
+    });
+  }
+
+  Future<void> _saveModePreference(bool value) async {
+    setState(() {
+      isLightMode = value;
+    });
+    await _prefs.setBool('isLightMode', value);
+  }
+
   // Change Mode
   void changeMode() {
-    setState(() {
-      isLightMode = !isLightMode;
-    });
+    bool newMode = !isLightMode;
+    _saveModePreference(newMode);
 
-    if (isLightMode) {
+    if (newMode) {
       context.read<Placehold>().updatePlaceholder("Light Mode", 1500);
     } else {
       context.read<Placehold>().updatePlaceholder("Dark Mode", 1500);
@@ -117,7 +136,7 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-// Save Task
+  // Save Task
   void saveNewTask() {
     setState(() {
       db.todoList.add([_newTask.text, false]);
@@ -158,7 +177,7 @@ class _HomePageState extends State<HomePage> {
       child: Scaffold(
         backgroundColor: isLightMode
             ? Colors.grey.shade400
-            : const Color.fromARGB(255, 21, 21, 21),
+            : const Color.fromARGB(255, 26, 26, 26),
         extendBodyBehindAppBar: true,
         // Tasks Being Built
         body: SafeArea(
@@ -234,7 +253,7 @@ class _HomePageState extends State<HomePage> {
                       BoxShadow(
                         color: isLightMode
                             ? Colors.grey.shade400
-                            : const Color.fromARGB(255, 21, 21, 21),
+                            : const Color.fromARGB(255, 26, 26, 26),
                         offset: const Offset(0, -32),
                         blurRadius: 32,
                         spreadRadius: -2,
@@ -281,41 +300,43 @@ class _HomePageState extends State<HomePage> {
                                       : Colors.grey,
                                 ),
                                 decoration: BoxDecoration(
-                                    color: isLightMode
-                                        ? Colors.grey.shade400
-                                        : const Color.fromARGB(255, 21, 21, 21),
-                                    border: Border.all(
-                                      color: _focusNode.hasFocus
-                                          ? isLightMode
-                                              ? const Color(0xFFAB7D00)
-                                              : const Color(0xFFD5B858)
-                                          : isLongPress
-                                              ? const Color(0xFFAB7D00)
-                                              : Colors.grey.shade600,
-                                      width: 1,
-                                    ),
-                                    borderRadius: BorderRadius.circular(15),
+                                  color: isLightMode
+                                      ? Colors.grey.shade400
+                                      : const Color.fromARGB(255, 26, 26, 26),
+                                  border: Border.all(
+                                    color: _focusNode.hasFocus
+                                        ? isLightMode
+                                            ? const Color(0xFFAB7D00)
+                                            : const Color(0xFFD5B858)
+                                        : isLongPress
+                                            ? const Color.fromARGB(
+                                                255, 161, 52, 33)
+                                            : Colors.grey.shade600,
+                                    width: 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(15),
 
-                                    // Experimenting with Neumorphism
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: isLightMode
-                                            ? Colors.grey.shade600
-                                            : Colors.black,
-                                        offset: const Offset(4, 4),
-                                        blurRadius: 20,
-                                        spreadRadius: 0,
-                                      ),
-                                      BoxShadow(
-                                        color: isLightMode
-                                            ? Colors.grey.shade300
-                                            : const Color.fromARGB(
-                                                255, 36, 36, 36),
-                                        offset: const Offset(-5, -5),
-                                        blurRadius: 20,
-                                        spreadRadius: 0,
-                                      )
-                                    ]),
+                                  // Experimenting with Neumorphism
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: isLightMode
+                                          ? Colors.grey.shade600
+                                          : Colors.black,
+                                      offset: const Offset(4, 4),
+                                      blurRadius: 20,
+                                      spreadRadius: 0,
+                                    ),
+                                    BoxShadow(
+                                      color: isLightMode
+                                          ? Colors.grey.shade300
+                                          : const Color.fromARGB(
+                                              255, 36, 36, 36),
+                                      offset: const Offset(-5, -5),
+                                      blurRadius: 20,
+                                      spreadRadius: 0,
+                                    )
+                                  ],
+                                ),
                                 cursorColor: isLightMode
                                     ? const Color(0xFFAB7D00)
                                     : const Color(0xFFD5B858),
