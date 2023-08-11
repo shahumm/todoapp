@@ -17,30 +17,28 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Others
   final _newTask = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   bool isTextFieldFocused = false;
   int textFieldMaxLines = 1;
-
-  bool isLightMode = false;
   bool isLongPress = false;
 
+  // Shared Preferences for Light / Dark Mode
+  bool isLightMode = false;
   late SharedPreferences _prefs;
 
   // Referencing the Database
   final _box = Hive.box('dataBox');
-
-  // Instantiation of Database
   Database db = Database();
 
-  // Custom Widgets
+  // Circle Icon
   Widget interactIcon = Icon(
     CupertinoIcons.circle,
     size: 23,
     color: Colors.grey.shade600,
   );
 
+  // Snail Icon
   Widget theSnail = const Text(
     '🐌',
     style: TextStyle(fontSize: 18),
@@ -51,12 +49,10 @@ class _HomePageState extends State<HomePage> {
     return DateTime.now();
   }
 
-  // App First Runs
   @override
   void initState() {
     super.initState();
 
-    // Initializing Shared Preferences
     _initPreferences();
 
     if (_box.get("TodoList") == null) {
@@ -66,7 +62,7 @@ class _HomePageState extends State<HomePage> {
       // Database already exists
       db.readDatabase();
     }
-    db.readName();
+    // db.readName();
 
     super.initState();
 
@@ -85,7 +81,7 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // Initialize Shared Preferences
+  // Initializing Shared Preferences
   Future<void> _initPreferences() async {
     _prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -100,19 +96,19 @@ class _HomePageState extends State<HomePage> {
     await _prefs.setBool('isLightMode', value);
   }
 
-  // Change Mode
+  // Change Theme
   void changeMode() {
     bool newMode = !isLightMode;
     _saveModePreference(newMode);
 
     if (newMode) {
-      context.read<Placehold>().updatePlaceholder("Light Mode", 1500);
+      context.read<Placehold>().updatePlaceholder("Light Mode", 1000);
     } else {
-      context.read<Placehold>().updatePlaceholder("Dark Mode", 1500);
+      context.read<Placehold>().updatePlaceholder("Dark Mode", 1000);
     }
   }
 
-  // That Tickled
+  // Snail Appears
   void thatTickled() {
     int time = 5000;
     context.read<Placehold>().updatePlaceholder(
@@ -184,18 +180,23 @@ class _HomePageState extends State<HomePage> {
           top: false,
           child: Column(
             children: [
-              const ClipRRect(
-                borderRadius: BorderRadius.only(
+              ClipRRect(
+                borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(0),
                     topRight: Radius.circular(0),
                     bottomLeft: Radius.circular(50),
                     bottomRight: Radius.circular(50)),
                 child: SizedBox(
                   width: double.infinity,
-                  child: Image(
-                    image: AssetImage("assets/giphy copy.gif"),
-                    fit: BoxFit.cover,
-                  ),
+                  child: isLightMode
+                      ? const Image(
+                          image: AssetImage("assets/light.PNG"),
+                          fit: BoxFit.cover,
+                        )
+                      : const Image(
+                          image: AssetImage("assets/dark.PNG"),
+                          fit: BoxFit.cover,
+                        ),
                 ),
               ),
               Expanded(

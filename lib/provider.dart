@@ -14,6 +14,7 @@ class Placehold with ChangeNotifier {
     notifyListeners();
   }
 
+  // Change Text With Timer
   void updatePlaceholder(String newText, int duration) {
     _text = newText;
     Timer(Duration(milliseconds: duration), () {
@@ -22,12 +23,14 @@ class Placehold with ChangeNotifier {
     notifyListeners();
   }
 
+  // Change Text Without Timer
   void updatePlaceholderWithoutTimer(String newText) {
     _text = newText;
 
     notifyListeners();
   }
 
+  // Reset Text
   void defaultText() {
     DateTime date = DateTime.now();
     DateFormat formatter = DateFormat.MMMMEEEEd();
