@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -39,131 +40,79 @@ class _TodoTileState extends State<TodoTile> {
   bool isChecked = false;
   bool isText = false;
   Timer? confettiTimer;
-  String modifiedTask = '';
-  String newTask = '';
-  String keyword = "";
+  String currentTask = '';
 
   // Time
-  String taskTime = "";
   bool timeExceeded = false;
+  var time = DateTime.now();
 
   // Edit Task
   bool isEditing = false;
   final TextEditingController _textEditingController = TextEditingController();
+
+  // Audio
+  final player = AudioPlayer();
 
   @override
   void initState() {
     super.initState();
     isChecked = widget.taskCompleted;
 
-    modifiedTask = widget.taskName;
-    newTask = modifiedTask;
-
     // Confetti
     controller.addListener(() {
       isPlaying = controller.state == ConfettiControllerState.playing;
     });
 
-    keyword = hasKeyword();
-
-    _textEditingController.text = modifiedTask;
+    // Modifying Task in Presence of Date
+    currentTask = widget.taskName;
   }
 
-  // Check If Date is Present
-  bool hasDate(String text) {
-    final RegExp datePattern = RegExp(r'([a-zA-Z]+) (\d+)');
-    return datePattern.hasMatch(text);
+  @override
+  void dispose() {
+    super.dispose();
   }
 
-  // Detect Keyword
-  String hasKeyword() {
-    bool at = modifiedTask.toLowerCase().contains("at");
-    bool on = modifiedTask.toLowerCase().contains("on");
-    bool by = modifiedTask.toLowerCase().contains("by");
+  // Current Formatted Time
+  String currentTime = DateFormat('hh:mm').format(DateTime.now());
 
-    if (at) {
-      return "at";
-    } else if (on) {
-      return "on";
-    } else if (by) {
-      return "by";
+  // Entered Time
+  String extractTime(String currentTask) {
+    RegExp timePattern = RegExp(r'\b(?:\d{1,2}:)?\d{1,2}:\d{2}\b');
+    Match? match = timePattern.firstMatch(currentTask);
+    if (match != null) {
+      return match.group(0)!; // Time found
     } else {
-      return "0";
+      return ''; // No time found
     }
   }
 
-  // Modifying Task Name According to Date's Presence
-  String conditionalTaskName(bool hasDate, String keyword) {
-    int keywordIndex = modifiedTask.indexOf(keyword);
-    if (hasDate) {
-      return modifiedTask.substring(0, keywordIndex).trim();
-    } else {
-      return modifiedTask;
-    }
+  bool hasTime(String currentTask) {
+    RegExp timePattern = RegExp(r'\b(?:\d{1,2}:)?\d{1,2}:\d{2}\b');
+    return timePattern.hasMatch(currentTask);
   }
 
-  String getTaskTime() {
-    int keywordIndex = modifiedTask.indexOf(keyword);
-    if (keywordIndex != -1 && keywordIndex + 8 <= modifiedTask.length) {
-      String taskTimeSubstring =
-          modifiedTask.substring(keywordIndex + 3, keywordIndex + 8).trim();
+// Time Difference
+  String calculateTimeDifference() {
+    String taskTime = extractTime(currentTask);
 
-      taskTimeSubstring =
-          taskTimeSubstring.replaceAll(RegExp(r'\b(at|on)\b'), '').trim();
+    // Parsing time strings
+    DateTime start = DateFormat('HH:mm').parse(currentTime);
+    DateTime end = DateFormat('HH:mm').parse(taskTime);
 
-      if (taskTimeSubstring.length == 5) {
-        return taskTimeSubstring;
-      }
-    }
-    return "bleh";
-  }
+    Duration difference = end.difference(start);
 
-  String formatRemainingTime(int hours, int minutes) {
-    if (hours == 0 && minutes == 0) {
-      timeExceeded = true;
-      return "Time Exceeded";
-    } else if (hours == 1 && minutes == 1) {
-      timeExceeded = false;
-      return "in $hours hour and $minutes minute";
-    } else if (hours == 1) {
-      timeExceeded = false;
-      return "in $hours hour and $minutes minutes";
-    } else if (minutes == 1) {
-      timeExceeded = false;
-      return "in $hours hours and $minutes minute";
-    } else if (hours == 0) {
-      timeExceeded = false;
-      return "in $minutes minutes";
-    } else if (minutes == 0) {
-      timeExceeded = false;
-      return "in $hours hours";
-    } else {
-      timeExceeded = false;
-      return "in $hours hours and $minutes minutes";
-    }
-  }
-
-  String remainingTime() {
-    // Current Time
-    DateTime now = DateTime.now();
-
-    // Time from Task
-    String newTaskTime = getTaskTime();
-
-    DateTime extractedTaskTime = DateFormat('yyyy-MM-dd H:mm')
-        .parse('${now.year}-${now.month}-${now.day} $newTaskTime');
-
-    if (!timeExceeded && extractedTaskTime.isBefore(now)) {
-      extractedTaskTime = extractedTaskTime.add(const Duration(days: 1));
-    } else if (timeExceeded) {
-      return "Time Exceeded";
+    if (difference.isNegative) {
+      // Add 24 Hours
+      difference += const Duration(hours: 24);
     }
 
-    Duration remainingDuration = extractedTaskTime.difference(now);
-    int hours = remainingDuration.inHours;
-    int minutes = remainingDuration.inMinutes.remainder(60).abs();
+    int hoursLeft = difference.inHours;
+    int minutesLeft = difference.inMinutes % 60;
 
-    return formatRemainingTime(hours, minutes);
+    String formattedTimeDifference =
+        'in $hoursLeft hours and $minutesLeft minutes';
+
+    return formattedTimeDifference;
   }
 
   @override
@@ -174,6 +123,8 @@ class _TodoTileState extends State<TodoTile> {
           setState(() {
             context.read<Placehold>().updateEditStatus(true);
             isEditing = true;
+
+            player.play(AssetSource('edit.mp3'));
           });
         } else {
           setState(() {
@@ -185,7 +136,7 @@ class _TodoTileState extends State<TodoTile> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        margin: const EdgeInsets.only(left: 25, right: 25, bottom: 10),
+        margin: const EdgeInsets.only(left: 25, right: 25, top: 7),
         decoration: BoxDecoration(
             color: widget.isLightMode
                 ? Colors.grey.shade400
@@ -228,8 +179,8 @@ class _TodoTileState extends State<TodoTile> {
             ]),
         child: Padding(
           padding: EdgeInsets.only(
-            bottom: hasDate(widget.taskName) ? 0.0 : 5.0,
-            top: 5.0,
+            bottom: hasTime(widget.taskName) ? 0.0 : 1.0,
+            top: 1.0,
           ),
           child: Column(
             children: [
@@ -237,14 +188,13 @@ class _TodoTileState extends State<TodoTile> {
                 title: Padding(
                   padding: const EdgeInsets.only(left: 8.0),
                   child: context.read<Placehold>().isEditing
-
                       // Editing Text Field
                       ? TextField(
                           autofocus: true,
                           decoration: null,
                           controller: _textEditingController,
                           onChanged: (value) {
-                            modifiedTask = value;
+                            currentTask = value;
                           },
                           onSubmitted: (value) {
                             setState(() {
@@ -258,13 +208,12 @@ class _TodoTileState extends State<TodoTile> {
                             color: widget.isLightMode
                                 ? Colors.grey.shade800
                                 : const Color.fromARGB(255, 239, 239, 239),
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.w500,
                           ),
                         )
                       : Text(
-                          conditionalTaskName(
-                              hasDate(widget.taskName), keyword),
+                          widget.taskName,
                           style: GoogleFonts.quicksand(
                             color: widget.isLightMode
                                 ? isChecked
@@ -273,7 +222,7 @@ class _TodoTileState extends State<TodoTile> {
                                 : isChecked
                                     ? Colors.grey.shade500
                                     : Colors.white,
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.w500,
                             decoration: isChecked
                                 ? TextDecoration.lineThrough
@@ -288,104 +237,126 @@ class _TodoTileState extends State<TodoTile> {
                   confettiController: controller,
                   blastDirectionality: BlastDirectionality.explosive,
                   emissionFrequency: 0,
-                  gravity: 0.8,
+                  gravity: 0.9,
                   maxBlastForce: 50,
-                  numberOfParticles: 15,
+                  numberOfParticles: 30,
                   shouldLoop: false,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.translucent,
-                    child: isEditing
-                        ? MSHCheckbox(
-                            size: 32,
-                            style: MSHCheckboxStyle.fillScaleColor,
-                            duration: const Duration(milliseconds: 1000),
-                            colorConfig:
-                                MSHColorConfig.fromCheckedUncheckedDisabled(
-                              checkedColor: widget.isLightMode
-                                  ? const Color(0xFFAB7D00)
-                                  : const Color.fromARGB(255, 159, 137, 67),
-                            ),
-                            value: true,
-                            onChanged: (value) {
-                              setState(() {
-                                context
-                                    .read<Placehold>()
-                                    .updateEditStatus(false);
-                                isEditing = false;
-                              });
+                  child: Consumer<Placehold>(
+                    builder: (context, placehold, _) {
+                      return GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        child: isEditing
+                            ? MSHCheckbox(
+                                size: 30,
+                                style: MSHCheckboxStyle.fillScaleColor,
+                                duration: const Duration(milliseconds: 1000),
+                                colorConfig:
+                                    MSHColorConfig.fromCheckedUncheckedDisabled(
+                                  checkedColor: widget.isLightMode
+                                      ? const Color(0xFFAB7D00)
+                                      : const Color.fromARGB(255, 159, 137, 67),
+                                ),
+                                value: true,
+                                onChanged: (value) {
+                                  setState(() {
+                                    context
+                                        .read<Placehold>()
+                                        .updateEditStatus(false);
+                                    isEditing = false;
+                                  });
 
-                              widget.database
-                                  .updateTaskName(widget.index, modifiedTask);
-                            })
-                        : MSHCheckbox(
-                            size: 33,
-                            style: MSHCheckboxStyle.stroke,
-                            duration: const Duration(milliseconds: 500),
-                            colorConfig:
-                                MSHColorConfig.fromCheckedUncheckedDisabled(
-                              checkedColor: widget.isLightMode
-                                  ? const Color(0xFFAB7D00)
-                                  : const Color(0xFFD5B858),
-                              uncheckedColor: widget.isLightMode
-                                  ? Colors.grey.shade500
-                                  : const Color.fromARGB(255, 93, 93, 93),
-                            ),
-                            value: isChecked,
-                            onChanged: (value) {
-                              setState(
-                                () {
-                                  isChecked = value;
-                                  if (isChecked) {
-                                    controller.play();
+                                  widget.database.updateTaskName(
+                                      widget.index, currentTask);
+                                },
+                              )
+                            : MSHCheckbox(
+                                size: 30,
+                                style: MSHCheckboxStyle.stroke,
+                                duration: const Duration(milliseconds: 500),
+                                colorConfig:
+                                    MSHColorConfig.fromCheckedUncheckedDisabled(
+                                  disabledColor: Colors.red,
+                                  checkedColor: widget.isLightMode
+                                      ? const Color(0xFFAB7D00)
+                                      : const Color(0xFFD5B858),
+                                  uncheckedColor: widget.isLightMode
+                                      ? Colors.grey.shade500
+                                      : const Color.fromARGB(255, 93, 93, 93),
+                                ),
+                                value: isChecked,
+                                onChanged: (value) async {
+                                  setState(
+                                    () {
+                                      isChecked = value;
 
-                                    Timer(const Duration(milliseconds: 500),
-                                        () {
-                                      controller.stop();
-                                    });
+                                      // If Checked
+                                      if (isChecked) {
+                                        Timer(const Duration(milliseconds: 250),
+                                            () {
+                                          placehold.updatePlaceholder(
+                                            "Woohooo!",
+                                            8600,
+                                          );
+                                        });
 
-                                    // Timer(const Duration(milliseconds: 1000), () {
-                                    //   context.read<Placehold>().updatePlaceholder(
-                                    //         "Woohoo!",
-                                    //         1000,
-                                    //       );
-                                    // });
-                                    // context.read<Placehold>().boxChecked("Hi");
-                                  } else {
-                                    Timer(const Duration(milliseconds: 500),
-                                        () {
-                                      context
-                                          .read<Placehold>()
-                                          .updatePlaceholder(
+                                        // Play Sound
+                                        player.play(AssetSource('check.mp3'));
+
+                                        // Play Confetti
+                                        controller.play();
+                                        Timer(const Duration(milliseconds: 500),
+                                            () {
+                                          controller.stop();
+                                        });
+                                      }
+
+                                      // If Unchecked
+                                      else {
+                                        Timer(const Duration(milliseconds: 500),
+                                            () {
+                                          placehold.updatePlaceholder(
                                             "Oh, nevermind.",
                                             500,
                                           );
-                                    });
-                                  }
+                                        });
+
+                                        // Play Sound
+                                        player.play(
+                                          AssetSource('uncheck.mp3'),
+                                        );
+                                      }
+                                    },
+                                  );
+                                  await player.stop();
+
+                                  widget.database.todoList[widget.index][1] =
+                                      isChecked;
+                                  widget.database.updateDatabase();
                                 },
-                              );
-                              widget.database.todoList[widget.index][1] =
-                                  isChecked;
-                              widget.database.updateDatabase();
-                            },
-                          ),
+                              ),
+                      );
+                    },
                   ),
                 ),
               ),
-              if (hasDate(modifiedTask) && !isChecked)
+              if (hasTime(currentTask) && !isChecked)
                 Container(
                   width: 400,
                   height: 30,
-                  decoration: const BoxDecoration(
-                    borderRadius: BorderRadius.only(
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.only(
                       bottomLeft: Radius.circular(15),
                       bottomRight: Radius.circular(15),
                     ),
-                    color: Color.fromARGB(60, 213, 184, 88),
+                    color: widget.isLightMode
+                        ? const Color.fromARGB(167, 112, 101, 58)
+                        : const Color.fromARGB(60, 213, 184, 88),
                   ),
                   child: Align(
                     alignment: Alignment.center,
                     child: Text(
-                      remainingTime(),
+                      // SHOW TIME DIFFERENCE
+                      calculateTimeDifference(),
                       style: GoogleFonts.quicksand(
                         color: Colors.white,
                         fontSize: 16,

@@ -29,19 +29,4 @@ class Database {
     todoList[index][0] = newName;
     updateDatabase();
   }
-
-  // void readName() {
-  //   var nameFromBox = _box.get("Name");
-  //   if (nameFromBox != null && nameFromBox is String) {
-  //     name = nameFromBox;
-  //   } else {
-  //     name = "Default Name";
-  //   }
-  // }
-
-  // // Update User
-  // void updateName(String newName) {
-  //   name = newName;
-  //   _box.put("Name", name);
-  // }
 }
