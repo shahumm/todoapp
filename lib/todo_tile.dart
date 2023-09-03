@@ -63,7 +63,6 @@ class _TodoTileState extends State<TodoTile> {
       isPlaying = controller.state == ConfettiControllerState.playing;
     });
 
-    // Modifying Task in Presence of Date
     currentTask = widget.taskName;
   }
 
@@ -123,7 +122,7 @@ class _TodoTileState extends State<TodoTile> {
           setState(() {
             context.read<Placehold>().updateEditStatus(true);
             isEditing = true;
-
+            _textEditingController.text = currentTask;
             player.play(AssetSource('edit.mp3'));
           });
         } else {
@@ -201,7 +200,6 @@ class _TodoTileState extends State<TodoTile> {
                               context.read<Placehold>().updateEditStatus(false);
                               isEditing = false;
                             });
-
                             widget.database.updateTaskName(widget.index, value);
                           },
                           style: GoogleFonts.quicksand(
@@ -213,7 +211,7 @@ class _TodoTileState extends State<TodoTile> {
                           ),
                         )
                       : Text(
-                          widget.taskName,
+                          currentTask,
                           style: GoogleFonts.quicksand(
                             color: widget.isLightMode
                                 ? isChecked

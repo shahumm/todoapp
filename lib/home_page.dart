@@ -27,7 +27,7 @@ class _HomePageState extends State<HomePage> {
   bool isLongPress = false;
 
   // // List Scrolls to Bottom When New Task Added
-  // ScrollController _scrollController = ScrollController();
+  ScrollController _scrollController = ScrollController();
 
   // Audio
   final player = AudioPlayer();
@@ -149,7 +149,11 @@ class _HomePageState extends State<HomePage> {
     _newTask.clear();
     db.updateDatabase();
 
-    // _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+    _scrollController.animateTo(
+      _scrollController.position.minScrollExtent,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.fastOutSlowIn,
+    );
   }
 
   // Removing Task
@@ -216,6 +220,7 @@ class _HomePageState extends State<HomePage> {
               children: [
                 Expanded(
                   child: CustomScrollView(
+                    controller: _scrollController,
                     slivers: [
                       SliverAppBar(
                         backgroundColor: Colors.transparent,
@@ -235,14 +240,16 @@ class _HomePageState extends State<HomePage> {
                       SliverList(
                         delegate: SliverChildBuilderDelegate((context, index) {
                           if (index >= 0 && index < db.todoList.length) {
-                            // Ensure that index is within the valid range
+                            final reversedIndex =
+                                db.todoList.length - index - 1;
+
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 15.0),
                               child: Dismissible(
                                 key: UniqueKey(),
                                 onDismissed: (direction) {
                                   setState(() {
-                                    removeTask(index);
+                                    removeTask(reversedIndex);
                                   });
                                 },
                                 background: Container(
@@ -268,16 +275,21 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ),
                                 child: TodoTile(
-                                  taskName: db.todoList[index][0],
-                                  taskCompleted: db.todoList[index][1],
+                                  taskName: db.todoList[reversedIndex][0],
+                                  taskCompleted: db.todoList[reversedIndex][1],
                                   deleteFunction: (p0) => removeTask,
-                                  index: index,
+                                  index: reversedIndex,
                                   database: db,
                                   isLightMode: isLightMode,
                                 ),
                               ),
                             );
                           }
+                          if (index == db.todoList.length) {
+                            return const SizedBox(
+                                height: 50.0); // Adjust the height as needed
+                          }
+                          return null;
                         }),
                       ),
                     ],
