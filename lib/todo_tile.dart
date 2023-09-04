@@ -17,6 +17,7 @@ class TodoTile extends StatefulWidget {
   final int index;
   final Database database;
   final bool isLightMode;
+  final bool isMute;
 
   // Constructor
   const TodoTile({
@@ -27,6 +28,7 @@ class TodoTile extends StatefulWidget {
     required this.index,
     required this.database,
     required this.isLightMode,
+    required this.isMute,
   });
 
   @override
@@ -41,6 +43,7 @@ class _TodoTileState extends State<TodoTile> {
   bool isText = false;
   Timer? confettiTimer;
   String currentTask = '';
+  int latestTaskIndex = 0;
 
   // Time
   bool timeExceeded = false;
@@ -64,6 +67,7 @@ class _TodoTileState extends State<TodoTile> {
     });
 
     currentTask = widget.taskName;
+    latestTaskIndex = widget.database.todoList.length - 1;
   }
 
   @override
@@ -92,7 +96,13 @@ class _TodoTileState extends State<TodoTile> {
 
 // Time Difference
   String calculateTimeDifference() {
+    // Is Task Time in PM?
     String taskTime = extractTime(currentTask);
+    bool isTaskTimePM = currentTask.toLowerCase().contains('pm');
+
+    // Is Current Time in PM?
+    String currentTime = DateFormat('hh:mm a').format(DateTime.now());
+    bool isCurrentTimePM = currentTime.toLowerCase().contains('pm');
 
     // Parsing time strings
     DateTime start = DateFormat('HH:mm').parse(currentTime);
@@ -100,16 +110,48 @@ class _TodoTileState extends State<TodoTile> {
 
     Duration difference = end.difference(start);
 
+    // All Cases
     if (difference.isNegative) {
-      // Add 24 Hours
       difference += const Duration(hours: 24);
+    } else if (isTaskTimePM && !isCurrentTimePM) {
+      difference += const Duration(hours: 12);
+    } else if (!isTaskTimePM && isCurrentTimePM) {
+      difference += const Duration(hours: 12);
     }
 
     int hoursLeft = difference.inHours;
     int minutesLeft = difference.inMinutes % 60;
 
-    String formattedTimeDifference =
-        'in $hoursLeft hours and $minutesLeft minutes';
+    String formattedTimeDifference;
+
+    // All Other Cases
+    if (hoursLeft == 0) {
+      if (minutesLeft == 1) {
+        formattedTimeDifference = '$minutesLeft minute';
+      } else if (minutesLeft > 1) {
+        formattedTimeDifference = '$minutesLeft minutes';
+      } else {
+        formattedTimeDifference = 'Time Exceeded';
+        context.read<Placehold>().isTimeExceeded(true);
+      }
+    } else if (hoursLeft == 1) {
+      if (minutesLeft == 0) {
+        formattedTimeDifference = 'in $hoursLeft hour';
+      } else if (minutesLeft == 1) {
+        formattedTimeDifference = 'in $hoursLeft hour and $minutesLeft minute';
+      } else {
+        formattedTimeDifference = 'in $hoursLeft hour and $minutesLeft minutes';
+      }
+    } else {
+      if (minutesLeft == 0) {
+        formattedTimeDifference = 'in $hoursLeft hours';
+      } else if (minutesLeft == 1) {
+        formattedTimeDifference = 'in $hoursLeft hours and $minutesLeft minute';
+      } else {
+        formattedTimeDifference =
+            'in $hoursLeft hours and $minutesLeft minutes';
+      }
+    }
 
     return formattedTimeDifference;
   }
@@ -123,7 +165,10 @@ class _TodoTileState extends State<TodoTile> {
             context.read<Placehold>().updateEditStatus(true);
             isEditing = true;
             _textEditingController.text = currentTask;
-            player.play(AssetSource('edit.mp3'));
+
+            if (!widget.isMute) {
+              player.play(AssetSource('edit.mp3'));
+            }
           });
         } else {
           setState(() {
@@ -137,9 +182,14 @@ class _TodoTileState extends State<TodoTile> {
         duration: const Duration(milliseconds: 150),
         margin: const EdgeInsets.only(left: 25, right: 25, top: 7),
         decoration: BoxDecoration(
-            color: widget.isLightMode
-                ? Colors.grey.shade400
-                : const Color.fromARGB(255, 26, 26, 26),
+            color: widget.index == latestTaskIndex &&
+                    context.read<Placehold>().highlightTask
+                ? widget.isLightMode
+                    ? const Color.fromARGB(255, 201, 201, 201)
+                    : const Color.fromARGB(255, 43, 43, 43)
+                : widget.isLightMode
+                    ? Colors.grey.shade400
+                    : const Color.fromARGB(255, 26, 26, 26),
             borderRadius: BorderRadius.circular(15),
             border: isEditing
                 ? Border.all(
@@ -298,7 +348,9 @@ class _TodoTileState extends State<TodoTile> {
                                         });
 
                                         // Play Sound
-                                        player.play(AssetSource('check.mp3'));
+                                        if (!widget.isMute) {
+                                          player.play(AssetSource('check.mp3'));
+                                        }
 
                                         // Play Confetti
                                         controller.play();
@@ -319,9 +371,11 @@ class _TodoTileState extends State<TodoTile> {
                                         });
 
                                         // Play Sound
-                                        player.play(
-                                          AssetSource('uncheck.mp3'),
-                                        );
+                                        if (!widget.isMute) {
+                                          player.play(
+                                            AssetSource('uncheck.mp3'),
+                                          );
+                                        }
                                       }
                                     },
                                   );
@@ -346,9 +400,15 @@ class _TodoTileState extends State<TodoTile> {
                       bottomLeft: Radius.circular(15),
                       bottomRight: Radius.circular(15),
                     ),
-                    color: widget.isLightMode
-                        ? const Color.fromARGB(167, 112, 101, 58)
-                        : const Color.fromARGB(60, 213, 184, 88),
+                    color:
+                        // context.read<Placehold>().timeExceeded
+                        //     ? widget.isLightMode
+                        //         ? Color.fromARGB(167, 112, 58, 58)
+                        //         : Color.fromARGB(59, 213, 88, 88)
+                        //     :
+                        widget.isLightMode
+                            ? const Color.fromARGB(167, 112, 101, 58)
+                            : const Color.fromARGB(60, 213, 184, 88),
                   ),
                   child: Align(
                     alignment: Alignment.center,

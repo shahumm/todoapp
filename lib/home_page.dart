@@ -26,8 +26,19 @@ class _HomePageState extends State<HomePage> {
   int textFieldMaxLines = 1;
   bool isLongPress = false;
 
-  // // List Scrolls to Bottom When New Task Added
-  ScrollController _scrollController = ScrollController();
+  // Mute Switch
+  bool isMute = false;
+
+  // Calback Mute
+  void _updateMutePreference(bool value) {
+    setState(() {
+      isMute = value;
+    });
+    _saveMutePreference(value);
+  }
+
+  // List Scrolls to Bottom When New Task Added
+  final ScrollController _scrollController = ScrollController();
 
   // Audio
   final player = AudioPlayer();
@@ -86,6 +97,19 @@ class _HomePageState extends State<HomePage> {
         context.read<Placehold>().defaultText();
       }
     });
+
+    // Refresh App (For Time Left Update)
+    Timer.periodic(const Duration(minutes: 5), (timer) {
+      setState(() {});
+    });
+
+    // Change Text Colour If Time Detected
+    _newTask.addListener(() {
+      RegExp timePattern = RegExp(r'\b(?:\d{1,2}:)?\d{1,2}:\d{2}\b');
+      bool containsTimePattern = timePattern.hasMatch(_newTask.text);
+
+      context.read<Placehold>().isTimeFound(containsTimePattern);
+    });
   }
 
   // Initializing Shared Preferences
@@ -93,6 +117,7 @@ class _HomePageState extends State<HomePage> {
     _prefs = await SharedPreferences.getInstance();
     setState(() {
       isLightMode = _prefs.getBool('isLightMode') ?? false;
+      isMute = _prefs.getBool('isMute') ?? false;
     });
   }
 
@@ -101,6 +126,13 @@ class _HomePageState extends State<HomePage> {
       isLightMode = value;
     });
     await _prefs.setBool('isLightMode', value);
+  }
+
+  Future<void> _saveMutePreference(bool value) async {
+    setState(() {
+      isMute = value;
+    });
+    await _prefs.setBool('isMute', value);
   }
 
   // Change Theme
@@ -143,7 +175,9 @@ class _HomePageState extends State<HomePage> {
   void saveNewTask() {
     setState(() {
       // New Task Sound
-      player.play(AssetSource('newtask.mp3'));
+      if (!isMute) {
+        player.play(AssetSource('newtask.mp3'));
+      }
       db.todoList.add([_newTask.text, false]);
     });
     _newTask.clear();
@@ -154,13 +188,24 @@ class _HomePageState extends State<HomePage> {
       duration: const Duration(milliseconds: 500),
       curve: Curves.fastOutSlowIn,
     );
+
+    // Highlight Text
+    context.read<Placehold>().updateHighlightStatus(true);
+
+    Timer(const Duration(milliseconds: 1000), () {
+      setState(() {
+        context.read<Placehold>().updateHighlightStatus(false);
+      });
+    });
   }
 
   // Removing Task
   void removeTask(int index) {
     setState(() {
       // Remove One Task Sound
-      player.play(AssetSource('delete-task.mp3'));
+      if (!isMute) {
+        player.play(AssetSource('delete-task.mp3'));
+      }
 
       db.todoList.removeAt(index);
     });
@@ -172,7 +217,9 @@ class _HomePageState extends State<HomePage> {
   void removeAllTasks() {
     setState(() {
       // Delete All Tasks Sound
-      player.play(AssetSource('delete.mp3'));
+      if (!isMute) {
+        player.play(AssetSource('delete.mp3'));
+      }
       db.todoList.clear();
     });
     db.updateDatabase();
@@ -182,17 +229,10 @@ class _HomePageState extends State<HomePage> {
   void invalidSelection() {
     setState(() {
       // Error Sound
-      player.play(AssetSource('error.mp3'));
+      if (!isMute) {
+        player.play(AssetSource('error.mp3'));
+      }
     });
-  }
-
-  // No Tasks
-  bool isListEmpty() {
-    if (db.todoList.isEmpty) {
-      return true;
-    } else {
-      return false;
-    }
   }
 
   @override
@@ -281,14 +321,40 @@ class _HomePageState extends State<HomePage> {
                                   index: reversedIndex,
                                   database: db,
                                   isLightMode: isLightMode,
+                                  isMute: isMute,
                                 ),
                               ),
                             );
                           }
                           if (index == db.todoList.length) {
-                            return const SizedBox(
-                                height: 50.0); // Adjust the height as needed
+                            if (db.todoList.isEmpty) {
+                              return SizedBox(
+                                height:
+                                    MediaQuery.of(context).size.height * 0.5,
+                                child: const Center(
+                                  child: Padding(
+                                    padding:
+                                        EdgeInsets.only(left: 30, right: 30),
+                                    child: Text(
+                                      "Your to-do list is as empty as a library at midnight.",
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w400,
+                                        color:
+                                            Color.fromARGB(255, 125, 125, 125),
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            } else {
+                              return const SizedBox(
+                                height: 50.0,
+                              );
+                            }
                           }
+
                           return null;
                         }),
                       ),
@@ -327,139 +393,168 @@ class _HomePageState extends State<HomePage> {
                                         left: 38,
                                         right: 38,
                                       ),
-                                child: CupertinoTextField(
-                                  key: const ValueKey('veryUnique'),
-                                  maxLines: textFieldMaxLines,
-                                  minLines: 1,
-                                  controller: _newTask,
-                                  focusNode: _focusNode,
-                                  padding: const EdgeInsets.all(16),
-                                  style: GoogleFonts.quicksand(
-                                    color: isLightMode
-                                        ? Colors.grey.shade800
-                                        : const Color.fromARGB(
-                                            255, 239, 239, 239),
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  placeholder: placehold.text,
-                                  placeholderStyle: TextStyle(
-                                    color: isLightMode
-                                        ? const Color.fromARGB(255, 90, 90, 90)
-                                        : Colors.grey,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isLightMode
-                                        ? Colors.grey.shade400
-                                        : const Color.fromARGB(255, 26, 26, 26),
-                                    border: Border.all(
-                                      color: _focusNode.hasFocus
+                                child: GestureDetector(
+                                  onVerticalDragUpdate: (details) {
+                                    int sensitivity = 8;
+                                    if (details.delta.dy < -sensitivity) {
+                                      showModalBottomSheet(
+                                        backgroundColor: null,
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return ModalElements(
+                                            isMute: isMute,
+                                            updateMutePreference:
+                                                _updateMutePreference,
+                                            isLightMode: isLightMode,
+                                          );
+                                        },
+                                      );
+                                    }
+                                  },
+                                  child: CupertinoTextField(
+                                    key: const ValueKey('veryUnique'),
+                                    maxLines: textFieldMaxLines,
+                                    minLines: 1,
+                                    controller: _newTask,
+                                    focusNode: _focusNode,
+                                    padding: const EdgeInsets.all(16),
+                                    style: GoogleFonts.quicksand(
+                                      color: placehold.timeFound
                                           ? isLightMode
-                                              ? const Color(0xFFAB7D00)
-                                              : const Color(0xFFD5B858)
-                                          : isLongPress
                                               ? const Color.fromARGB(
-                                                  255, 161, 52, 33)
-                                              : Colors.grey.shade600,
-                                      width: 1,
+                                                  255, 132, 113, 37)
+                                              : const Color.fromARGB(
+                                                  255, 205, 182, 105)
+                                          : isLightMode
+                                              ? Colors.grey.shade800
+                                              : const Color.fromARGB(
+                                                  255, 239, 239, 239),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
                                     ),
-                                    borderRadius: BorderRadius.circular(15),
-
-                                    // Experimenting with Neumorphism
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: isLightMode
-                                            ? Colors.grey.shade600
-                                            : Colors.black,
-                                        offset: const Offset(4, 4),
-                                        blurRadius: 20,
-                                        spreadRadius: 0,
-                                      ),
-                                      BoxShadow(
-                                        color: isLightMode
-                                            ? Colors.grey.shade300
-                                            : const Color.fromARGB(
-                                                255, 36, 36, 36),
-                                        offset: const Offset(-5, -5),
-                                        blurRadius: 20,
-                                        spreadRadius: 0,
-                                      ),
-                                    ],
-                                  ),
-                                  cursorColor: isLightMode
-                                      ? const Color(0xFFAB7D00)
-                                      : const Color(0xFFD5B858),
-                                  suffix: _focusNode.hasFocus
-                                      ? CupertinoButton(
-                                          onPressed: () {
-                                            if (_newTask.text.trim().isEmpty) {
-                                              placehold.updatePlaceholder(
-                                                "Umm, this is not how it works...",
-                                                5000,
-                                              );
-
-                                              invalidSelection();
-                                            } else {
-                                              saveNewTask();
-                                              _focusNode.unfocus();
-                                            }
-                                          },
-                                          child: Icon(
-                                            CupertinoIcons.add,
-                                            size: 23,
-                                            color: isLightMode
+                                    placeholder: placehold.text,
+                                    placeholderStyle: TextStyle(
+                                      color: isLightMode
+                                          ? const Color.fromARGB(
+                                              255, 90, 90, 90)
+                                          : Colors.grey,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isLightMode
+                                          ? Colors.grey.shade400
+                                          : const Color.fromARGB(
+                                              255, 26, 26, 26),
+                                      border: Border.all(
+                                        color: _focusNode.hasFocus
+                                            ? isLightMode
                                                 ? const Color(0xFFAB7D00)
-                                                : const Color(0xFFD5B858),
-                                          ),
-                                        )
-                                      : GestureDetector(
-                                          onLongPress: () {
-                                            if (db.todoList.isNotEmpty) {
-                                              setState(() {
-                                                isLongPress = true;
-                                                placehold
-                                                    .updatePlaceholderWithoutTimer(
-                                                  "All tasks deleted!",
-                                                );
-                                              });
-                                              removeAllTasks();
-                                            } else {
-                                              setState(() {
-                                                invalidSelection();
-                                                isLongPress = true;
-                                                context
-                                                    .read<Placehold>()
-                                                    .updatePlaceholderWithoutTimer(
-                                                      "Locating nearby eye specialists...",
-                                                    );
-                                              });
-                                            }
-                                          },
-                                          onLongPressEnd: (details) {
-                                            setState(() {
-                                              isLongPress = false;
-                                              placehold.defaultText();
-                                            });
-                                          },
-                                          child: CupertinoButton(
+                                                : const Color(0xFFD5B858)
+                                            : isLongPress
+                                                ? const Color.fromARGB(
+                                                    255, 161, 52, 33)
+                                                : Colors.grey.shade600,
+                                        width: 1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(15),
+
+                                      // Experimenting with Neumorphism
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: isLightMode
+                                              ? Colors.grey.shade600
+                                              : Colors.black,
+                                          offset: const Offset(4, 4),
+                                          blurRadius: 20,
+                                          spreadRadius: 0,
+                                        ),
+                                        BoxShadow(
+                                          color: isLightMode
+                                              ? Colors.grey.shade300
+                                              : const Color.fromARGB(
+                                                  255, 36, 36, 36),
+                                          offset: const Offset(-5, -5),
+                                          blurRadius: 20,
+                                          spreadRadius: 0,
+                                        ),
+                                      ],
+                                    ),
+                                    cursorColor: isLightMode
+                                        ? const Color(0xFFAB7D00)
+                                        : const Color(0xFFD5B858),
+                                    suffix: _focusNode.hasFocus
+                                        ? CupertinoButton(
                                             onPressed: () {
-                                              if (isLongPress) {
+                                              if (_newTask.text
+                                                  .trim()
+                                                  .isEmpty) {
+                                                placehold.updatePlaceholder(
+                                                  "Umm, this is not how it works...",
+                                                  5000,
+                                                );
+
+                                                invalidSelection();
                                               } else {
-                                                thatTickled();
+                                                saveNewTask();
+                                                _focusNode.unfocus();
                                               }
                                             },
-                                            child: isLongPress
-                                                ? Icon(CupertinoIcons.delete,
-                                                    size: 23,
-                                                    color: isLightMode
-                                                        ? Colors.grey.shade600
-                                                        : Colors.grey)
-                                                : interactIcon,
+                                            child: Icon(
+                                              CupertinoIcons.add,
+                                              size: 23,
+                                              color: isLightMode
+                                                  ? const Color(0xFFAB7D00)
+                                                  : const Color(0xFFD5B858),
+                                            ),
+                                          )
+                                        : GestureDetector(
+                                            onLongPress: () {
+                                              if (db.todoList.isNotEmpty) {
+                                                setState(() {
+                                                  isLongPress = true;
+                                                  placehold
+                                                      .updatePlaceholderWithoutTimer(
+                                                    "All tasks deleted!",
+                                                  );
+                                                });
+                                                removeAllTasks();
+                                              } else {
+                                                setState(() {
+                                                  invalidSelection();
+                                                  isLongPress = true;
+                                                  context
+                                                      .read<Placehold>()
+                                                      .updatePlaceholderWithoutTimer(
+                                                        "Locating nearby eye specialists...",
+                                                      );
+                                                });
+                                              }
+                                            },
+                                            onLongPressEnd: (details) {
+                                              setState(() {
+                                                isLongPress = false;
+                                                placehold.defaultText();
+                                              });
+                                            },
+                                            child: CupertinoButton(
+                                              onPressed: () {
+                                                if (isLongPress) {
+                                                } else {
+                                                  thatTickled();
+                                                }
+                                              },
+                                              child: isLongPress
+                                                  ? Icon(CupertinoIcons.delete,
+                                                      size: 23,
+                                                      color: isLightMode
+                                                          ? Colors.grey.shade600
+                                                          : Colors.grey)
+                                                  : interactIcon,
+                                            ),
+                                            onDoubleTap: () {
+                                              changeMode();
+                                            },
                                           ),
-                                          onDoubleTap: () {
-                                            changeMode();
-                                          },
-                                        ),
+                                  ),
                                 ),
                               ),
                       ),
@@ -473,12 +568,95 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// class Holder extends StatelessWidget {
-//   const Holder({super.key});
+class ModalElements extends StatefulWidget {
+  final bool isMute;
+  final Function(bool) updateMutePreference;
+  final bool isLightMode;
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Text(context.watch<Placehold>().text, key: const Key('veryUnique'));
-//   }
-// }
+  const ModalElements(
+      {super.key,
+      required this.isMute,
+      required this.updateMutePreference,
+      required this.isLightMode});
 
+  @override
+  State<ModalElements> createState() => _ModalElementsState();
+}
+
+class _ModalElementsState extends State<ModalElements> {
+  late bool isMute;
+
+  @override
+  void initState() {
+    super.initState();
+    isMute = widget.isMute;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: widget.isLightMode
+            ? Colors.grey.shade400
+            : const Color.fromARGB(255, 26, 26, 26),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(27.0),
+          topRight: Radius.circular(27.0),
+        ),
+      ),
+      height: 200,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            // Mute Toggle
+            Padding(
+              padding: const EdgeInsets.only(
+                  left: 27.0, right: 27, top: 27, bottom: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Mute Sounds',
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w400,
+                        color: widget.isLightMode
+                            ? const Color.fromARGB(255, 26, 26, 26)
+                            : Colors.grey.shade400),
+                  ),
+                  Switch(
+                    value: isMute,
+                    onChanged: (value) {
+                      setState(() {
+                        isMute = value;
+                      });
+                      widget.updateMutePreference(isMute);
+                    },
+                    activeColor: Colors.green,
+                    inactiveTrackColor: widget.isLightMode
+                        ? Colors.grey.shade400
+                        : const Color.fromARGB(255, 26, 26, 26),
+                    inactiveThumbColor: widget.isLightMode
+                        ? const Color.fromARGB(255, 137, 137, 137)
+                        : Colors.grey,
+                  ),
+                ],
+              ),
+            ),
+
+            // Divider
+            Divider(
+              color: widget.isLightMode
+                  ? Colors.grey
+                  : const Color.fromARGB(255, 57, 57, 57),
+              thickness: 2,
+              indent: 27,
+              endIndent: 27,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
