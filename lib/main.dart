@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:todoapp/home_page.dart';
+import 'package:todoapp/intro%20screens/intro_screens.dart';
 import 'package:todoapp/provider.dart';
 
 void main() async {
@@ -34,8 +34,11 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         brightness: Brightness.dark,
       ),
-      home: const HomePage(),
+      home: const IntroScreen(),
       debugShowCheckedModeBanner: false,
+      routes: {
+        '/HomePage': (context) => const HomePage(),
+      },
     );
   }
 }

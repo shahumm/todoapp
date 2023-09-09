@@ -7,6 +7,15 @@ class Placehold with ChangeNotifier {
   String _text = "New Task";
   String get text => _text;
 
+  // Transition
+  bool _showTransition = false;
+  bool get showTransition => _showTransition;
+
+  void updateShowTransition(bool status) {
+    _showTransition = status;
+    notifyListeners();
+  }
+
   // Time Exceeded
   bool _timeExceeded = false;
   bool get timeExceeded => _timeExceeded;

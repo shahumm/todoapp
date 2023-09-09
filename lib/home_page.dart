@@ -29,6 +29,10 @@ class _HomePageState extends State<HomePage> {
   // Mute Switch
   bool isMute = false;
 
+  // Transition GIFS
+  AssetImage toLight = const AssetImage("assets/toLight.gif");
+  AssetImage toDark = const AssetImage("assets/toDark.gif");
+
   // Calback Mute
   void _updateMutePreference(bool value) {
     setState(() {
@@ -37,7 +41,7 @@ class _HomePageState extends State<HomePage> {
     _saveMutePreference(value);
   }
 
-  // List Scrolls to Bottom When New Task Added
+  // List Scrolls to Top When New Task Added
   final ScrollController _scrollController = ScrollController();
 
   // Audio
@@ -73,6 +77,9 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
 
+    toLight = const AssetImage("assets/toLight.gif");
+    toDark = const AssetImage("assets/toDark.gif");
+
     _initPreferences();
 
     if (_box.get("TodoList") == null) {
@@ -99,7 +106,7 @@ class _HomePageState extends State<HomePage> {
     });
 
     // Refresh App (For Time Left Update)
-    Timer.periodic(const Duration(minutes: 5), (timer) {
+    Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {});
     });
 
@@ -145,6 +152,13 @@ class _HomePageState extends State<HomePage> {
     } else {
       context.read<Placehold>().updatePlaceholder("Dark Mode", 1000);
     }
+
+    context.read<Placehold>().updateShowTransition(true);
+    Timer(const Duration(milliseconds: 1000), () {
+      context.read<Placehold>().updateShowTransition(false);
+      toLight.evict();
+      toDark.evict();
+    });
   }
 
   // Snail Appears
@@ -237,8 +251,19 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    toLight.evict();
+    toDark.evict();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  void changeBackgroundColor() {
+    isLightMode = !isLightMode;
+    Future.delayed(Duration(seconds: 5), () {
+      setState(() {
+        isLightMode = !isLightMode;
+      });
+    });
   }
 
   @override
@@ -264,17 +289,33 @@ class _HomePageState extends State<HomePage> {
                     slivers: [
                       SliverAppBar(
                         backgroundColor: Colors.transparent,
-                        expandedHeight: 200,
-                        flexibleSpace: FlexibleSpaceBar(
-                          background: isLightMode
-                              ? const Image(
-                                  image: AssetImage("assets/light.PNG"),
-                                  fit: BoxFit.cover,
-                                )
-                              : const Image(
-                                  image: AssetImage("assets/dark.PNG"),
-                                  fit: BoxFit.cover,
-                                ),
+                        expandedHeight: 252,
+                        flexibleSpace: ClipRRect(
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(25),
+                            bottomRight: Radius.circular(25),
+                          ),
+                          child: FlexibleSpaceBar(
+                            background: context.read<Placehold>().showTransition
+                                ? isLightMode
+                                    ? Image(
+                                        image: toLight,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : const Image(
+                                        image: AssetImage("assets/toDark.gif"),
+                                        fit: BoxFit.cover,
+                                      )
+                                : isLightMode
+                                    ? const Image(
+                                        image: AssetImage("assets/light.gif"),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : const Image(
+                                        image: AssetImage("assets/default.gif"),
+                                        fit: BoxFit.cover,
+                                      ),
+                          ),
                         ),
                       ),
                       SliverList(
